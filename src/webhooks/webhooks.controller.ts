@@ -1,7 +1,7 @@
 import { All, Body, Controller, Query, Req } from '@nestjs/common';
 import { Request } from 'express';
 
-@Controller('webhook')
+@Controller('webhooks')
 export class WebhooksController {
   @All('test')
   logAll(@Req() req: Request, @Body() body: any, @Query() query: any) {
@@ -25,4 +25,3 @@ export class WebhooksController {
     };
   }
 }
-
