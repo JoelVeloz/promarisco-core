@@ -12,6 +12,9 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
+      skipMissingProperties: true,
+      skipNullProperties: true,
+      skipUndefinedProperties: true,
     }),
   );
   await app.listen(config.PORT);
