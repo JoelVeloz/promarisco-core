@@ -1,9 +1,9 @@
 import { All, Body, Controller, Query, Req } from '@nestjs/common';
 import { Request } from 'express';
 
-@Controller('test')
-export class WebhookController {
-  @All()
+@Controller('webhook')
+export class WebhooksController {
+  @All('test')
   logAll(@Req() req: Request, @Body() body: any, @Query() query: any) {
     console.log('=== WEBHOOK REQUEST ===');
     console.log('Method:', req.method);
@@ -25,3 +25,4 @@ export class WebhookController {
     };
   }
 }
+
