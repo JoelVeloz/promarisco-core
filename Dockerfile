@@ -19,8 +19,8 @@ RUN npm ci
 # Copiar el resto de la aplicación
 COPY . .
 
-# # Generar el código del cliente de Prisma
-# RUN npx prisma generate
+# Generar el código del cliente de Prisma
+RUN npx prisma generate
 
 # Construir la aplicación
 RUN npm run build
