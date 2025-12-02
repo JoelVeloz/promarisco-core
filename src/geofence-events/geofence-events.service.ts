@@ -141,6 +141,7 @@ export class GeofenceEventsService implements OnModuleInit {
   async getZoneTimes(): Promise<ZoneTime[]> {
     const result = await this.prisma.geofenceEvent.aggregateRaw({
       pipeline: [
+        // --- Filtrar datos válidos ---
         {
           $match: {
             'transformed.UNIT': { $exists: true, $ne: null },
@@ -149,6 +150,8 @@ export class GeofenceEventsService implements OnModuleInit {
             name: { $in: ['ENTRADA_GEOCERCA', 'SALIDA_GEOCERCA'] },
           },
         },
+
+        // --- Proyección limpia ---
         {
           $project: {
             unit: '$transformed.UNIT',
@@ -157,81 +160,79 @@ export class GeofenceEventsService implements OnModuleInit {
             time: '$transformed.POS_TIME_UTC',
           },
         },
+
+        // --- Ordenar por unidad, zona, tiempo ---
         {
-          $sort: {
-            unit: 1,
-            zone: 1,
-            time: 1,
+          $sort: { unit: 1, zone: 1, time: 1 },
+        },
+
+        // --- Agrupar por unit + zone ---
+        {
+          $group: {
+            _id: { unit: '$unit', zone: '$zone' },
+            events: { $push: '$$ROOT' },
           },
         },
       ],
     });
 
-    const events = Array.isArray(result) ? result : [];
+    const groupedResults = Array.isArray(result) ? result : [];
     const zoneTimes: ZoneTime[] = [];
-    const grouped: Record<string, Array<{ eventType: string; time: string }>> = {};
 
-    // Agrupar eventos por unidad y zona
-    for (const event of events) {
-      const key = `${(event as any).unit}|${(event as any).zone}`;
-      if (!grouped[key]) {
-        grouped[key] = [];
-      }
-      grouped[key].push({
-        eventType: (event as any).eventType,
-        time: (event as any).time,
-      });
-    }
+    // Procesar reglas: entradas consecutivas / salidas consecutivas en Node.js
+    for (const group of groupedResults) {
+      const unit = (group as any)._id.unit;
+      const zone = (group as any)._id.zone;
+      const events = (group as any).events || [];
 
-    // Emparejar entradas con salidas
-    for (const [key, eventList] of Object.entries(grouped)) {
-      const [unit, zone] = key.split('|');
-      const sortedEvents = eventList.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+      let lastEntry: { eventType: string; time: string } | null = null;
 
-      let currentEntry: { eventType: string; time: string } | null = null;
-
-      for (const event of sortedEvents) {
-        if (event.eventType === 'ENTRADA_GEOCERCA') {
-          // Si hay una entrada pendiente sin salida, guardarla con endTime null
-          if (currentEntry) {
+      for (const e of events) {
+        if (e.eventType === 'ENTRADA_GEOCERCA') {
+          // Si hay una entrada pendiente sin salida, guardarla con exitTime null
+          if (lastEntry) {
             zoneTimes.push({
               unit,
               zone,
-              startTime: currentEntry.time,
+              startTime: lastEntry.time,
               endTime: null,
-              startTimeReadable: this.formatDateReadable(currentEntry.time),
+              startTimeReadable: this.formatDateReadable(lastEntry.time),
               endTimeReadable: null,
               durationMinutes: null,
             });
           }
-          currentEntry = event;
-        } else if (event.eventType === 'SALIDA_GEOCERCA') {
-          if (currentEntry) {
+          // Entradas consecutivas → quedarse con la más reciente
+          lastEntry = e;
+          continue;
+        }
+
+        if (e.eventType === 'SALIDA_GEOCERCA') {
+          if (lastEntry) {
             // Emparejar entrada con salida y calcular duración
-            const startDate = new Date(currentEntry.time);
-            const endDate = new Date(event.time);
+            const startDate = new Date(lastEntry.time);
+            const endDate = new Date(e.time);
             const durationSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
             const durationMinutes = Number((durationSeconds / 60).toFixed(2));
 
             zoneTimes.push({
               unit,
               zone,
-              startTime: currentEntry.time,
-              endTime: event.time,
-              startTimeReadable: this.formatDateReadable(currentEntry.time),
-              endTimeReadable: this.formatDateReadable(event.time),
+              startTime: lastEntry.time,
+              endTime: e.time,
+              startTimeReadable: this.formatDateReadable(lastEntry.time),
+              endTimeReadable: this.formatDateReadable(e.time),
               durationMinutes,
             });
-            currentEntry = null;
+            lastEntry = null; // Consumimos la entrada
           } else {
             // Salida sin entrada previa
             zoneTimes.push({
               unit,
               zone,
               startTime: null,
-              endTime: event.time,
+              endTime: e.time,
               startTimeReadable: null,
-              endTimeReadable: this.formatDateReadable(event.time),
+              endTimeReadable: this.formatDateReadable(e.time),
               durationMinutes: null,
             });
           }
@@ -239,13 +240,13 @@ export class GeofenceEventsService implements OnModuleInit {
       }
 
       // Si queda una entrada sin salida
-      if (currentEntry) {
+      if (lastEntry) {
         zoneTimes.push({
           unit,
           zone,
-          startTime: currentEntry.time,
+          startTime: lastEntry.time,
           endTime: null,
-          startTimeReadable: this.formatDateReadable(currentEntry.time),
+          startTimeReadable: this.formatDateReadable(lastEntry.time),
           endTimeReadable: null,
           durationMinutes: null,
         });
