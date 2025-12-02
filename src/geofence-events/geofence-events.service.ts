@@ -10,6 +10,7 @@ interface GetAllFilters {
   startTime?: string;
   endTime?: string;
   name?: string;
+  zone?: string;
 }
 
 @Injectable()
@@ -99,7 +100,7 @@ export class GeofenceEventsService implements OnModuleInit {
   async getAll(filters?: GetAllFilters): Promise<GeofenceEvent[]> {
     const events = await this.prisma.geofenceEvent.findMany();
 
-    if (!filters || (!filters.unit && !filters.startTime && !filters.endTime && !filters.name)) {
+    if (!filters || (!filters.unit && !filters.startTime && !filters.endTime && !filters.name && !filters.zone)) {
       return events;
     }
 
@@ -115,6 +116,10 @@ export class GeofenceEventsService implements OnModuleInit {
       }
 
       if (filters.unit && transformed.UNIT !== filters.unit) {
+        return false;
+      }
+
+      if (filters.zone && transformed.ZONE !== filters.zone) {
         return false;
       }
 
