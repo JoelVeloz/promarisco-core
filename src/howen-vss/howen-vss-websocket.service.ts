@@ -24,10 +24,14 @@ export class HowenVssWebSocketService implements OnModuleInit {
   private ws: WebSocket | null = null;
   private options?: HowenWebSocketOptions;
 
+  constructor(private readonly authService: HowenVssAuthService) {}
+
   async onModuleInit() {
     const url = `http://${config.HOWEN_VSS_SERVER_IP}`;
     const username = config.HOWEN_VSS_USERNAME;
-    const { pid, token } = await HowenVssAuthService.getCredentials();
+
+    this.logger.log('🔌 Iniciando conexión a Howen VSS');
+    const { pid, token } = await this.authService.getCredentials();
 
     this.connect({ url, username, pid, token });
   }

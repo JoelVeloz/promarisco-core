@@ -13,8 +13,6 @@ const envSchema = z.object({
   HOWEN_VSS_SERVER_IP: z.string(),
   HOWEN_VSS_USERNAME: z.string(),
   HOWEN_VSS_PASSWORD: z.string(),
-  HOWEN_VSS_PID: z.string().optional(),
-  HOWEN_VSS_TOKEN: z.string().optional(),
 });
 
 export const config = (() => {

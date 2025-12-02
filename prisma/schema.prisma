@@ -20,6 +20,16 @@ model Alert {
     @@map("alerts")
 }
 
+model GeofenceEvent {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    name      String
+    payload   Json?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("geofence_events")
+}
+
 // model AlertCode {
 //     id           String   @id @default(auto()) @map("_id") @db.ObjectId
 //     code         String

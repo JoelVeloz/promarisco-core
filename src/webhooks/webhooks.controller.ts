@@ -1,8 +1,10 @@
-import { All, Body, Controller, Query, Req } from '@nestjs/common';
+import { All, Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
 import { Request } from 'express';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Controller('webhooks')
 export class WebhooksController {
+  constructor(private readonly prisma: PrismaService) {}
   @All('test')
   async logAll(@Req() req: Request, @Body() body: any, @Query() query: any) {
     console.log('=== WEBHOOK REQUEST ===');
@@ -23,5 +25,14 @@ export class WebhooksController {
       query,
       body,
     };
+  }
+
+  @Post('on-track/:geofenceName')
+  async onTrack(@Param('geofenceName') geofenceName: string, @Body() body: any) {
+    console.log('geofenceName', geofenceName, 'body', body);
+    const eventoGeocerca = await this.prisma.geofenceEvent.create({
+      data: { name: geofenceName, payload: body },
+    });
+    return eventoGeocerca;
   }
 }
