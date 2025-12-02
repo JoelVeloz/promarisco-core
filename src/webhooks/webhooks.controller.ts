@@ -1,4 +1,4 @@
-import { All, Body, Controller, Param, Post, Query, Req } from '@nestjs/common';
+import { All, Body, Controller, Logger, Param, Post, Query, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -7,6 +7,7 @@ import { transformPayload } from '../geofence-events/utils/payload-transform.uti
 @ApiTags('Webhooks')
 @Controller('webhooks')
 export class WebhooksController {
+  private readonly logger = new Logger(WebhooksController.name);
   constructor(private readonly prisma: PrismaService) {}
 
   @All('test')
@@ -37,6 +38,7 @@ export class WebhooksController {
   @ApiOperation({ summary: 'Registrar evento geocerca' })
   @ApiResponse({ status: 201 })
   async onTrack(@Param('geofenceName') geofenceName: string, @Body() body: any) {
+    this.logger.log(`Registrando evento geocerca: ${geofenceName}`);
     const eventoGeocerca = await this.prisma.geofenceEvent.create({
       data: { name: geofenceName, payload: body },
     });
