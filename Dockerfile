@@ -7,14 +7,16 @@ RUN apk add --no-cache tzdata && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
     echo $TZ > /etc/timezone
 
+
+
 # Establecer el directorio de trabajo
 WORKDIR /app
 
 # Copiar package.json y package-lock.json
 COPY package*.json ./
 
-# Instalar dependencias
-RUN npm ci
+# Instalar dependencias (ignorando módulos opcionales)
+RUN npm ci 
 
 # Copiar el resto de la aplicación
 COPY . .
