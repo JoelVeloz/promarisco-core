@@ -12,18 +12,15 @@ export interface GeofenceZoneGroup {
 export interface ZoneTime {
   unit: string;
   zone: string;
-  startTime: string | null;
-  endTime: string | null;
-  startTimeReadable: string | null;
-  endTimeReadable: string | null;
-  durationMinutes: number | null;
+  entryTime: Date | null;
+  exitTime: Date | null;
 }
 
 export interface TransformedPayload {
   UNIT?: string;
   ZONE?: string;
   POS_TIME?: string;
-  POS_TIME_UTC?: string;
+  POS_TIME_UTC?: Date;
   SPEED?: string;
   LOCATION?: string;
 }

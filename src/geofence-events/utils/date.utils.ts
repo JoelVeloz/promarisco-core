@@ -1,19 +1,20 @@
 import { DateTime } from 'luxon';
 
 /**
- * Convierte una fecha en formato DD.MM.YYYY HH:mm:ss a UTC ISO string
+ * Convierte una fecha en formato DD.MM.YYYY HH:mm:ss (hora de Ecuador) a UTC Date
+ * Ecuador está en UTC-5 (America/Guayaquil)
  */
-export function convertToUTC(dateString: string): string | undefined {
+export function convertToUTC(dateString: string): Date | undefined {
   try {
-    // Formato: "02.12.2025 08:15:07"
-    const parsedDate = DateTime.fromFormat(dateString, 'dd.MM.yyyy HH:mm:ss', { zone: 'utc' });
+    const parsedDate = DateTime.fromFormat(dateString, 'dd.MM.yyyy HH:mm:ss', {
+      zone: 'America/Guayaquil',
+    });
 
     if (!parsedDate.isValid) {
       return undefined;
     }
 
-    // Retornar en formato UTC ISO
-    return parsedDate.toISO();
+    return parsedDate.toUTC().toJSDate();
   } catch (error) {
     return undefined;
   }

@@ -6,7 +6,7 @@ dotenv.config();
 
 const envSchema = z.object({
   // General
-  PORT: z.number().int().positive().default(3000),
+  PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.url(),
 
   // Howen VSS

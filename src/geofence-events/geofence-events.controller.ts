@@ -7,6 +7,7 @@ import { geofenceEventGroupResponseSchema } from './schemas/geofence-event-group
 import { geofenceEventResponseSchema } from './schemas/geofence-event.schema';
 import { zoneTimeResponseSchema } from './schemas/zone-time.schema';
 import { FindAllGeofenceEventsDto } from './dto/find-all-geofence-events.dto';
+import { PaginationResult } from '../common/interfaces/pagination-result.interface';
 
 @ApiTags('Geofence Events')
 @Controller('geofence-events')
@@ -37,7 +38,7 @@ export class GeofenceEventsController {
   @Get()
   @ApiOperation({ summary: 'Listar eventos' })
   @ApiResponse({ status: 200, schema: geofenceEventResponseSchema })
-  async getAll(@Query() query: FindAllGeofenceEventsDto): Promise<GeofenceEvent[]> {
+  async getAll(@Query() query: FindAllGeofenceEventsDto): Promise<PaginationResult<GeofenceEvent>> {
     return this.geofenceEventsService.getAll(query);
   }
 }

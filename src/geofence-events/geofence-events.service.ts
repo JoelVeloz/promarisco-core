@@ -2,6 +2,7 @@ import { GeofenceEventGroup, GeofenceZoneGroup, TransformedPayload, ZoneTime } f
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import { GeofenceEvent } from '@prisma/client';
+import { PaginationResult } from '../common/interfaces/pagination-result.interface';
 import { PrismaService } from '../prisma/prisma.service';
 import { transformPayload } from './utils/payload-transform.utils';
 
@@ -11,6 +12,8 @@ interface GetAllFilters {
   endTime?: string;
   name?: string;
   zone?: string;
+  page?: number;
+  limit?: number;
 }
 
 @Injectable()
@@ -20,8 +23,12 @@ export class GeofenceEventsService implements OnModuleInit {
   constructor(private prisma: PrismaService) {}
 
   async onModuleInit() {
+    // de todos limpia el campo transformed
+    // await this.prisma.geofenceEvent.updateMany({
+    //   data: { transformed: null },
+    // });
     this.logger.log('Iniciando proceso de generación de transformed para eventos sin transformar...');
-    await this.generateTransformedForMissingEvents();
+    this.generateTransformedForMissingEvents();
   }
 
   private async generateTransformedForMissingEvents(): Promise<void> {
@@ -124,180 +131,74 @@ export class GeofenceEventsService implements OnModuleInit {
     return result as unknown as GeofenceEventGroup[];
   }
 
-  private formatDateReadable(dateString: string | null): string | null {
-    if (!dateString) return null;
-    const date = new Date(dateString);
-    return date.toLocaleString('es-ES', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true,
-    });
-  }
-
   async getZoneTimes(): Promise<ZoneTime[]> {
-    const result = await this.prisma.geofenceEvent.aggregateRaw({
-      pipeline: [
-        // --- Filtrar datos válidos ---
-        {
-          $match: {
-            'transformed.UNIT': { $exists: true, $ne: null },
-            'transformed.ZONE': { $exists: true, $ne: null },
-            'transformed.POS_TIME_UTC': { $exists: true, $ne: null },
-            name: { $in: ['ENTRADA_GEOCERCA', 'SALIDA_GEOCERCA'] },
-          },
-        },
-
-        // --- Proyección limpia ---
-        {
-          $project: {
-            unit: '$transformed.UNIT',
-            zone: '$transformed.ZONE',
-            eventType: '$name',
-            time: '$transformed.POS_TIME_UTC',
-          },
-        },
-
-        // --- Ordenar por unidad, zona, tiempo ---
-        {
-          $sort: { unit: 1, zone: 1, time: 1 },
-        },
-
-        // --- Agrupar por unit + zone ---
-        {
-          $group: {
-            _id: { unit: '$unit', zone: '$zone' },
-            events: { $push: '$$ROOT' },
-          },
-        },
-      ],
-    });
-
-    const groupedResults = Array.isArray(result) ? result : [];
-    const zoneTimes: ZoneTime[] = [];
-
-    // Procesar reglas: entradas consecutivas / salidas consecutivas en Node.js
-    for (const group of groupedResults) {
-      const unit = (group as any)._id.unit;
-      const zone = (group as any)._id.zone;
-      const events = (group as any).events || [];
-
-      let lastEntry: { eventType: string; time: string } | null = null;
-
-      for (const e of events) {
-        if (e.eventType === 'ENTRADA_GEOCERCA') {
-          // Si hay una entrada pendiente sin salida, guardarla con exitTime null
-          if (lastEntry) {
-            zoneTimes.push({
-              unit,
-              zone,
-              startTime: lastEntry.time,
-              endTime: null,
-              startTimeReadable: this.formatDateReadable(lastEntry.time),
-              endTimeReadable: null,
-              durationMinutes: null,
-            });
-          }
-          // Entradas consecutivas → quedarse con la más reciente
-          lastEntry = e;
-          continue;
-        }
-
-        if (e.eventType === 'SALIDA_GEOCERCA') {
-          if (lastEntry) {
-            // Emparejar entrada con salida y calcular duración
-            const startDate = new Date(lastEntry.time);
-            const endDate = new Date(e.time);
-            const durationSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
-            const durationMinutes = Number((durationSeconds / 60).toFixed(2));
-
-            zoneTimes.push({
-              unit,
-              zone,
-              startTime: lastEntry.time,
-              endTime: e.time,
-              startTimeReadable: this.formatDateReadable(lastEntry.time),
-              endTimeReadable: this.formatDateReadable(e.time),
-              durationMinutes,
-            });
-            lastEntry = null; // Consumimos la entrada
-          } else {
-            // Salida sin entrada previa
-            zoneTimes.push({
-              unit,
-              zone,
-              startTime: null,
-              endTime: e.time,
-              startTimeReadable: null,
-              endTimeReadable: this.formatDateReadable(e.time),
-              durationMinutes: null,
-            });
-          }
-        }
-      }
-
-      // Si queda una entrada sin salida
-      if (lastEntry) {
-        zoneTimes.push({
-          unit,
-          zone,
-          startTime: lastEntry.time,
-          endTime: null,
-          startTimeReadable: this.formatDateReadable(lastEntry.time),
-          endTimeReadable: null,
-          durationMinutes: null,
-        });
-      }
-    }
-
-    return zoneTimes;
+    const docs = ((await this.prisma.$runCommandRaw({ find: 'zone_times', sort: { entryTime: 1 } })) as any).cursor?.firstBatch || [];
+    return docs.map((d: any) => ({
+      unit: d.unit,
+      zone: d.zone,
+      entryTime: d.entryTime?.$date,
+      exitTime: d.exitTime?.$date,
+    }));
   }
 
-  async getAll(filters?: GetAllFilters): Promise<GeofenceEvent[]> {
+  async getAll(filters?: GetAllFilters): Promise<PaginationResult<GeofenceEvent>> {
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 10;
+    const skip = (page - 1) * limit;
+
     const events = await this.prisma.geofenceEvent.findMany();
 
-    if (!filters || (!filters.unit && !filters.startTime && !filters.endTime && !filters.name && !filters.zone)) {
-      return events;
+    let filteredEvents = events;
+
+    if (filters && (filters.unit || filters.startTime || filters.endTime || filters.name || filters.zone)) {
+      filteredEvents = events.filter((event) => {
+        if (filters.name && event.name !== filters.name) {
+          return false;
+        }
+
+        const transformed = event.transformed as TransformedPayload | null;
+
+        if (!transformed) {
+          return false;
+        }
+
+        if (filters.unit && transformed.UNIT !== filters.unit) {
+          return false;
+        }
+
+        if (filters.zone && transformed.ZONE !== filters.zone) {
+          return false;
+        }
+
+        if (filters.startTime || filters.endTime) {
+          const posTimeUTC = transformed.POS_TIME_UTC;
+          if (!posTimeUTC) {
+            return false;
+          }
+
+          if (filters.startTime && posTimeUTC < new Date(filters.startTime)) {
+            return false;
+          }
+
+          if (filters.endTime && posTimeUTC > new Date(filters.endTime)) {
+            return false;
+          }
+        }
+
+        return true;
+      });
     }
 
-    return events.filter((event) => {
-      if (filters.name && event.name !== filters.name) {
-        return false;
-      }
+    const total = filteredEvents.length;
+    const totalPages = Math.ceil(total / limit);
+    const paginatedEvents = filteredEvents.slice(skip, skip + limit);
 
-      const transformed = event.transformed as TransformedPayload | null;
-
-      if (!transformed) {
-        return false;
-      }
-
-      if (filters.unit && transformed.UNIT !== filters.unit) {
-        return false;
-      }
-
-      if (filters.zone && transformed.ZONE !== filters.zone) {
-        return false;
-      }
-
-      if (filters.startTime || filters.endTime) {
-        const posTimeUTC = transformed.POS_TIME_UTC;
-        if (!posTimeUTC) {
-          return false;
-        }
-
-        if (filters.startTime && posTimeUTC < filters.startTime) {
-          return false;
-        }
-
-        if (filters.endTime && posTimeUTC > filters.endTime) {
-          return false;
-        }
-      }
-
-      return true;
-    });
+    return {
+      data: paginatedEvents,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 }

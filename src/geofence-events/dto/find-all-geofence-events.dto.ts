@@ -1,4 +1,5 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsInt, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -47,4 +48,31 @@ export class FindAllGeofenceEventsDto {
   @IsOptional()
   @IsString()
   zone?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Número de página',
+    example: 1,
+    default: 1,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @ApiProperty({
+    required: false,
+    description: 'Cantidad de elementos por página',
+    example: 10,
+    default: 10,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number;
 }
+
+
+
