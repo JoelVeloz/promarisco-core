@@ -1,7 +1,8 @@
-import { All, Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags, ApiParam, ApiBody } from '@nestjs/swagger';
+import { All, Body, Controller, Param, Post, Query, Req } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { transformPayload } from '../geofence-events/utils/payload-transform.utils';
 
 @ApiTags('Webhooks')
 @Controller('webhooks')
@@ -9,8 +10,8 @@ export class WebhooksController {
   constructor(private readonly prisma: PrismaService) {}
 
   @All('test')
-  @ApiOperation({ summary: 'Endpoint de prueba' })
-  @ApiResponse({ status: 200, description: 'Webhook recibido' })
+  @ApiOperation({ summary: 'Prueba webhook' })
+  @ApiResponse({ status: 200 })
   async logAll(@Req() req: Request, @Body() body: any, @Query() query: any) {
     console.log('=== WEBHOOK REQUEST ===');
     console.log('Method:', req.method);
@@ -33,15 +34,22 @@ export class WebhooksController {
   }
 
   @Post('on-track/:geofenceName')
-  @ApiOperation({ summary: 'Registrar evento de geocerca' })
-  @ApiParam({ name: 'geofenceName', description: 'Nombre de la geocerca' })
-  @ApiBody({ description: 'Payload del evento' })
-  @ApiResponse({ status: 201, description: 'Evento creado' })
+  @ApiOperation({ summary: 'Registrar evento geocerca' })
+  @ApiResponse({ status: 201 })
   async onTrack(@Param('geofenceName') geofenceName: string, @Body() body: any) {
-    console.log('geofenceName', geofenceName, 'body', body);
     const eventoGeocerca = await this.prisma.geofenceEvent.create({
       data: { name: geofenceName, payload: body },
     });
-    return eventoGeocerca;
+
+    try {
+      const transformed = transformPayload(body);
+      return await this.prisma.geofenceEvent.update({
+        where: { id: eventoGeocerca.id },
+        data: { transformed: transformed as any },
+      });
+    } catch (error) {
+      console.error('Error actualizando transformed:', error);
+      return eventoGeocerca;
+    }
   }
 }
