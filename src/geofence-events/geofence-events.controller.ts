@@ -13,10 +13,17 @@ export class GeofenceEventsController {
   constructor(private readonly geofenceEventsService: GeofenceEventsService) {}
 
   @Get('grouped-by-name')
-  @ApiOperation({ summary: 'Eventos agrupados' })
+  @ApiOperation({ summary: 'Eventos agrupados por nombre' })
   @ApiResponse({ status: 200, schema: geofenceEventGroupResponseSchema })
   async getGroupedByName(): Promise<GeofenceEventGroup[]> {
     return this.geofenceEventsService.groupByName();
+  }
+
+  @Get('grouped-by-zone')
+  @ApiOperation({ summary: 'Eventos agrupados por zona' })
+  @ApiResponse({ status: 200, schema: geofenceEventGroupResponseSchema })
+  async getGroupedByZone(): Promise<GeofenceEventGroup[]> {
+    return this.geofenceEventsService.groupByZone();
   }
 
   @Get()

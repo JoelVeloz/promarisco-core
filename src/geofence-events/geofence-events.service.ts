@@ -1,4 +1,4 @@
-import { GeofenceEventGroup, TransformedPayload } from './types/geofence-event.types';
+import { GeofenceEventGroup, GeofenceZoneGroup, TransformedPayload } from './types/geofence-event.types';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import { GeofenceEvent } from '@prisma/client';
@@ -92,6 +92,33 @@ export class GeofenceEventsService implements OnModuleInit {
   async groupByName(): Promise<GeofenceEventGroup[]> {
     const result = await this.prisma.geofenceEvent.aggregateRaw({
       pipeline: [{ $group: { _id: '$name', count: { $sum: 1 } } }, { $project: { name: '$_id', count: 1, _id: 0 } }],
+    });
+
+    return result as unknown as GeofenceEventGroup[];
+  }
+
+  async groupByZone(): Promise<GeofenceEventGroup[]> {
+    const result = await this.prisma.geofenceEvent.aggregateRaw({
+      pipeline: [
+        {
+          $match: {
+            'transformed.ZONE': { $exists: true, $ne: null },
+          },
+        },
+        {
+          $group: {
+            _id: '$transformed.ZONE',
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            name: '$_id',
+            count: 1,
+            _id: 0,
+          },
+        },
+      ],
     });
 
     return result as unknown as GeofenceEventGroup[];
