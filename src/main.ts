@@ -22,7 +22,9 @@ async function bootstrap() {
 
   const swaggerConfig = new DocumentBuilder().setTitle('Promarisco Core API').setVersion('1.0').build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api', app, document);
+  const { apiReference } = await eval("import('@scalar/nestjs-api-reference')");
+  app.use('/api', apiReference({ content: document }));
+  // SwaggerModule.setup('api', app, document);
 
   await app.listen(config.PORT);
   console.log(`Server is running on port ${config.PORT}`);
