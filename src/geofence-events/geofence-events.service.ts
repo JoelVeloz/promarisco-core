@@ -9,6 +9,7 @@ interface GetAllFilters {
   unit?: string;
   startTime?: string;
   endTime?: string;
+  name?: string;
 }
 
 @Injectable()
@@ -98,11 +99,15 @@ export class GeofenceEventsService implements OnModuleInit {
   async getAll(filters?: GetAllFilters): Promise<GeofenceEvent[]> {
     const events = await this.prisma.geofenceEvent.findMany();
 
-    if (!filters || (!filters.unit && !filters.startTime && !filters.endTime)) {
+    if (!filters || (!filters.unit && !filters.startTime && !filters.endTime && !filters.name)) {
       return events;
     }
 
     return events.filter((event) => {
+      if (filters.name && event.name !== filters.name) {
+        return false;
+      }
+
       const transformed = event.transformed as TransformedPayload | null;
 
       if (!transformed) {
