@@ -1,12 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const dayjs = require('dayjs');
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const customParseFormat = require('dayjs/plugin/customParseFormat');
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const utc = require('dayjs/plugin/utc');
-
-dayjs.extend(customParseFormat);
-dayjs.extend(utc);
+import { DateTime } from 'luxon';
 
 /**
  * Convierte una fecha en formato DD.MM.YYYY HH:mm:ss a UTC ISO string
@@ -14,14 +6,14 @@ dayjs.extend(utc);
 export function convertToUTC(dateString: string): string | undefined {
   try {
     // Formato: "02.12.2025 08:15:07"
-    const parsedDate = dayjs(dateString, 'DD.MM.YYYY HH:mm:ss', true);
+    const parsedDate = DateTime.fromFormat(dateString, 'dd.MM.yyyy HH:mm:ss', { zone: 'utc' });
 
-    if (!parsedDate.isValid()) {
+    if (!parsedDate.isValid) {
       return undefined;
     }
 
     // Retornar en formato UTC ISO
-    return parsedDate.utc().toISOString();
+    return parsedDate.toISO();
   } catch (error) {
     return undefined;
   }
