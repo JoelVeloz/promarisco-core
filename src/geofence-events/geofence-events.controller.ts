@@ -1,10 +1,11 @@
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Query } from '@nestjs/common';
-import { GeofenceEventGroup } from './types/geofence-event.types';
+import { GeofenceEventGroup, ZoneTime } from './types/geofence-event.types';
 import { GeofenceEvent } from '@prisma/client';
 import { GeofenceEventsService } from './geofence-events.service';
 import { geofenceEventGroupResponseSchema } from './schemas/geofence-event-group.schema';
 import { geofenceEventResponseSchema } from './schemas/geofence-event.schema';
+import { zoneTimeResponseSchema } from './schemas/zone-time.schema';
 import { FindAllGeofenceEventsDto } from './dto/find-all-geofence-events.dto';
 
 @ApiTags('Geofence Events')
@@ -24,6 +25,13 @@ export class GeofenceEventsController {
   @ApiResponse({ status: 200, schema: geofenceEventGroupResponseSchema })
   async getGroupedByZone(): Promise<GeofenceEventGroup[]> {
     return this.geofenceEventsService.groupByZone();
+  }
+
+  @Get('zone-times')
+  @ApiOperation({ summary: 'Tiempos de permanencia por zona y unidad (viajes)' })
+  @ApiResponse({ status: 200, schema: zoneTimeResponseSchema })
+  async getZoneTimes(): Promise<ZoneTime[]> {
+    return this.geofenceEventsService.getZoneTimes();
   }
 
   @Get()

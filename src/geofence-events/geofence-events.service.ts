@@ -1,4 +1,4 @@
-import { GeofenceEventGroup, GeofenceZoneGroup, TransformedPayload } from './types/geofence-event.types';
+import { GeofenceEventGroup, GeofenceZoneGroup, TransformedPayload, ZoneTime } from './types/geofence-event.types';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import { GeofenceEvent } from '@prisma/client';
@@ -122,6 +122,137 @@ export class GeofenceEventsService implements OnModuleInit {
     });
 
     return result as unknown as GeofenceEventGroup[];
+  }
+
+  private formatDateReadable(dateString: string | null): string | null {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return date.toLocaleString('es-ES', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
+  }
+
+  async getZoneTimes(): Promise<ZoneTime[]> {
+    const result = await this.prisma.geofenceEvent.aggregateRaw({
+      pipeline: [
+        {
+          $match: {
+            'transformed.UNIT': { $exists: true, $ne: null },
+            'transformed.ZONE': { $exists: true, $ne: null },
+            'transformed.POS_TIME_UTC': { $exists: true, $ne: null },
+            name: { $in: ['ENTRADA_GEOCERCA', 'SALIDA_GEOCERCA'] },
+          },
+        },
+        {
+          $project: {
+            unit: '$transformed.UNIT',
+            zone: '$transformed.ZONE',
+            eventType: '$name',
+            time: '$transformed.POS_TIME_UTC',
+          },
+        },
+        {
+          $sort: {
+            unit: 1,
+            zone: 1,
+            time: 1,
+          },
+        },
+      ],
+    });
+
+    const events = Array.isArray(result) ? result : [];
+    const zoneTimes: ZoneTime[] = [];
+    const grouped: Record<string, Array<{ eventType: string; time: string }>> = {};
+
+    // Agrupar eventos por unidad y zona
+    for (const event of events) {
+      const key = `${(event as any).unit}|${(event as any).zone}`;
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      grouped[key].push({
+        eventType: (event as any).eventType,
+        time: (event as any).time,
+      });
+    }
+
+    // Emparejar entradas con salidas
+    for (const [key, eventList] of Object.entries(grouped)) {
+      const [unit, zone] = key.split('|');
+      const sortedEvents = eventList.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+      let currentEntry: { eventType: string; time: string } | null = null;
+
+      for (const event of sortedEvents) {
+        if (event.eventType === 'ENTRADA_GEOCERCA') {
+          // Si hay una entrada pendiente sin salida, guardarla con endTime null
+          if (currentEntry) {
+            zoneTimes.push({
+              unit,
+              zone,
+              startTime: currentEntry.time,
+              endTime: null,
+              startTimeReadable: this.formatDateReadable(currentEntry.time),
+              endTimeReadable: null,
+              durationMinutes: null,
+            });
+          }
+          currentEntry = event;
+        } else if (event.eventType === 'SALIDA_GEOCERCA') {
+          if (currentEntry) {
+            // Emparejar entrada con salida y calcular duración
+            const startDate = new Date(currentEntry.time);
+            const endDate = new Date(event.time);
+            const durationSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
+            const durationMinutes = Number((durationSeconds / 60).toFixed(2));
+
+            zoneTimes.push({
+              unit,
+              zone,
+              startTime: currentEntry.time,
+              endTime: event.time,
+              startTimeReadable: this.formatDateReadable(currentEntry.time),
+              endTimeReadable: this.formatDateReadable(event.time),
+              durationMinutes,
+            });
+            currentEntry = null;
+          } else {
+            // Salida sin entrada previa
+            zoneTimes.push({
+              unit,
+              zone,
+              startTime: null,
+              endTime: event.time,
+              startTimeReadable: null,
+              endTimeReadable: this.formatDateReadable(event.time),
+              durationMinutes: null,
+            });
+          }
+        }
+      }
+
+      // Si queda una entrada sin salida
+      if (currentEntry) {
+        zoneTimes.push({
+          unit,
+          zone,
+          startTime: currentEntry.time,
+          endTime: null,
+          startTimeReadable: this.formatDateReadable(currentEntry.time),
+          endTimeReadable: null,
+          durationMinutes: null,
+        });
+      }
+    }
+
+    return zoneTimes;
   }
 
   async getAll(filters?: GetAllFilters): Promise<GeofenceEvent[]> {

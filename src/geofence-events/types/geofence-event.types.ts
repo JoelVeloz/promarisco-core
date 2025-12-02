@@ -9,6 +9,16 @@ export interface GeofenceZoneGroup {
   events: GeofenceEventGroup[];
 }
 
+export interface ZoneTime {
+  unit: string;
+  zone: string;
+  startTime: string | null;
+  endTime: string | null;
+  startTimeReadable: string | null;
+  endTimeReadable: string | null;
+  durationMinutes: number | null;
+}
+
 export interface TransformedPayload {
   UNIT?: string;
   ZONE?: string;
