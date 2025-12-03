@@ -12,6 +12,7 @@ interface GetAllFilters {
   endTime?: string;
   name?: string;
   zone?: string;
+  group?: string;
   page?: number;
   limit?: number;
 }
@@ -24,9 +25,9 @@ export class GeofenceEventsService implements OnModuleInit {
 
   async onModuleInit() {
     // de todos limpia el campo transformed
-    // await this.prisma.geofenceEvent.updateMany({
-    //   data: { transformed: null },
-    // });
+    await this.prisma.geofenceEvent.updateMany({
+      data: { transformed: null },
+    });
     this.logger.log('Iniciando proceso de generación de transformed para eventos sin transformar...');
     this.generateTransformedForMissingEvents();
   }
@@ -42,34 +43,31 @@ export class GeofenceEventsService implements OnModuleInit {
           },
         ],
       });
+      // ultimos 100 datos
+      let events = (rawEvents as unknown as any[]).slice(0, 100);
 
-      const events = Array.isArray(rawEvents) ? rawEvents : [];
+      events = Array.isArray(rawEvents) ? rawEvents : [];
 
       if (events.length === 0) {
         this.logger.log('No hay eventos sin transformed. Proceso completado.');
         return;
       }
 
-      this.logger.log(`Encontrados ${events.length} eventos sin transformed. Iniciando procesamiento...`);
+      this.logger.log(`Encontrados ${events.length} eventos sin transformed. Iniciando procesamiento en paralelo...`);
 
-      let processed = 0;
-      let errors = 0;
-
-      for (const rawEvent of events) {
+      const processEvent = async (rawEvent: any) => {
         try {
           const eventId = (rawEvent as any)._id?.$oid || (rawEvent as any)._id || (rawEvent as any).id;
 
           if (!eventId) {
             this.logger.warn('Evento sin ID válido, saltando...');
-            errors++;
-            continue;
+            return { success: false, error: 'ID inválido' };
           }
 
           const payload = (rawEvent as any).payload;
           if (!payload) {
             this.logger.warn(`Evento ${eventId} sin payload, saltando...`);
-            errors++;
-            continue;
+            return { success: false, error: 'Sin payload' };
           }
 
           const transformed = transformPayload(payload);
@@ -78,16 +76,39 @@ export class GeofenceEventsService implements OnModuleInit {
               where: { id: eventId },
               data: { transformed: transformed as any },
             });
-            processed++;
             this.logger.debug(`Evento ${eventId} procesado correctamente. UNIT: ${transformed.UNIT || 'N/A'}`);
+            return { success: true, unit: transformed.UNIT };
           } else {
             this.logger.warn(`Evento ${eventId} no pudo ser transformado. Payload vacío o formato inválido.`);
-            errors++;
+            return { success: false, error: 'Transformación fallida' };
           }
         } catch (error) {
           this.logger.error(`Error procesando evento:`, error);
-          errors++;
+          return { success: false, error: error.message };
         }
+      };
+
+      // Procesar en paralelo con límite de concurrencia
+      const concurrency = 200; // Número de eventos a procesar simultáneamente
+      let processed = 0;
+      let errors = 0;
+
+      // Dividir eventos en chunks
+      for (let i = 0; i < events.length; i += concurrency) {
+        const chunk = events.slice(i, i + concurrency);
+        const results = await Promise.all(chunk.map((event) => processEvent(event)));
+
+        results.forEach((result) => {
+          if (result.success) {
+            processed++;
+          } else {
+            errors++;
+          }
+        });
+
+        // Mostrar progreso cada chunk
+        const progress = Math.min(i + concurrency, events.length);
+        this.logger.log(`Progreso: ${progress}/${events.length} eventos procesados (${processed} exitosos, ${errors} errores)`);
       }
 
       this.logger.log(`Proceso completado. Procesados: ${processed}, Errores: ${errors}, Total: ${events.length}`);
@@ -96,7 +117,7 @@ export class GeofenceEventsService implements OnModuleInit {
     }
   }
 
-  async groupByName(): Promise<GeofenceEventGroup[]> {
+  async groupByName(filters?: GetAllFilters): Promise<GeofenceEventGroup[]> {
     const result = await this.prisma.geofenceEvent.aggregateRaw({
       pipeline: [{ $group: { _id: '$name', count: { $sum: 1 } } }, { $project: { name: '$_id', count: 1, _id: 0 } }],
     });
@@ -104,7 +125,7 @@ export class GeofenceEventsService implements OnModuleInit {
     return result as unknown as GeofenceEventGroup[];
   }
 
-  async groupByZone(): Promise<GeofenceEventGroup[]> {
+  async groupByZone(filters?: GetAllFilters): Promise<GeofenceEventGroup[]> {
     const result = await this.prisma.geofenceEvent.aggregateRaw({
       pipeline: [
         {
@@ -131,7 +152,7 @@ export class GeofenceEventsService implements OnModuleInit {
     return result as unknown as GeofenceEventGroup[];
   }
 
-  async getZoneTimes(): Promise<ZoneTime[]> {
+  async getZoneTimes(filters?: GetAllFilters): Promise<ZoneTime[]> {
     const docs = (await this.prisma.$runCommandRaw({
       aggregate: 'zone_times',
       pipeline: [{ $sort: { entryTime: -1 } }, { $limit: 20000 }],
@@ -144,6 +165,7 @@ export class GeofenceEventsService implements OnModuleInit {
     return allDocs.map((d: any) => ({
       unit: d.unit,
       zone: d.zone,
+      group: d.group,
       entryTime: d.entryTime?.$date,
       exitTime: d.exitTime?.$date,
     }));
@@ -158,7 +180,7 @@ export class GeofenceEventsService implements OnModuleInit {
 
     let filteredEvents = events;
 
-    if (filters && (filters.unit || filters.startTime || filters.endTime || filters.name || filters.zone)) {
+    if (filters && (filters.unit || filters.startTime || filters.endTime || filters.name || filters.zone || filters.group)) {
       filteredEvents = events.filter((event) => {
         if (filters.name && event.name !== filters.name) {
           return false;
@@ -178,17 +200,23 @@ export class GeofenceEventsService implements OnModuleInit {
           return false;
         }
 
+        if (filters.group && transformed.GRUPO_GEOCERCA !== filters.group) {
+          return false;
+        }
+
         if (filters.startTime || filters.endTime) {
           const posTimeUTC = transformed.POS_TIME_UTC;
           if (!posTimeUTC) {
             return false;
           }
 
-          if (filters.startTime && posTimeUTC < new Date(filters.startTime)) {
+          const posTimeDate = typeof posTimeUTC === 'string' ? new Date(posTimeUTC) : posTimeUTC;
+
+          if (filters.startTime && posTimeDate < new Date(filters.startTime)) {
             return false;
           }
 
-          if (filters.endTime && posTimeUTC > new Date(filters.endTime)) {
+          if (filters.endTime && posTimeDate > new Date(filters.endTime)) {
             return false;
           }
         }

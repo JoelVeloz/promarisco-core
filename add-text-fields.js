@@ -3,7 +3,7 @@ const path = require('path');
 
 /**
  * Genera el texto de entrada según el formato:
- * "%UNIT% entró en %ZONE% el %POS_TIME% con una velocidad de %SPEED% cerca de '%LOCATION%'. %FUENTE%"
+ * "%UNIT% entró en %ZONE% el %POS_TIME% con una velocidad de %SPEED% cerca de '%LOCATION%'."
  */
 function generarEntroTexto(evento) {
   if (!evento.horaEntrada) {
@@ -15,15 +15,13 @@ function generarEntroTexto(evento) {
   const posTime = evento.horaEntrada;
   const speed = '0 km/h'; // Valor por defecto ya que no tenemos velocidad en los datos originales
   const location = evento.descripcion || 'N/A';
-  const fuente = evento.fuente || '';
 
-  const textoBase = `${unit} entró en ${zone} el ${posTime} con una velocidad de ${speed} cerca de '${location}'.`;
-  return fuente ? `${textoBase} ${fuente}` : textoBase;
+  return `${unit} entró en ${zone} el ${posTime} con una velocidad de ${speed} cerca de '${location}'.`;
 }
 
 /**
  * Genera el texto de salida según el formato:
- * "%UNIT% salió de %ZONE% el %POS_TIME% con una velocidad de %SPEED% cerca de '%LOCATION%'. %FUENTE%"
+ * "%UNIT% salió de %ZONE% el %POS_TIME% con una velocidad de %SPEED% cerca de '%LOCATION%'."
  */
 function generarSalioTexto(evento) {
   if (!evento.horaSalida) {
@@ -35,10 +33,8 @@ function generarSalioTexto(evento) {
   const posTime = evento.horaSalida;
   const speed = '0 km/h'; // Valor por defecto ya que no tenemos velocidad en los datos originales
   const location = evento.descripcion || 'N/A';
-  const fuente = evento.fuente || '';
 
-  const textoBase = `${unit} salió de ${zone} el ${posTime} con una velocidad de ${speed} cerca de '${location}'.`;
-  return fuente ? `${textoBase} ${fuente}` : textoBase;
+  return `${unit} salió de ${zone} el ${posTime} con una velocidad de ${speed} cerca de '${location}'.`;
 }
 
 /**

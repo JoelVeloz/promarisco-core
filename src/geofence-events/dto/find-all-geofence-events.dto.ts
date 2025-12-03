@@ -51,6 +51,15 @@ export class FindAllGeofenceEventsDto {
 
   @ApiProperty({
     required: false,
+    description: 'Filtrar por grupo',
+    example: 'CAMARONERAS',
+  })
+  @IsOptional()
+  @IsString()
+  group?: string;
+
+  @ApiProperty({
+    required: false,
     description: 'Número de página',
     example: 1,
     default: 1,

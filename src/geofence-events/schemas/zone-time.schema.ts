@@ -5,6 +5,7 @@ export const zoneTimeResponseSchema = {
     properties: {
       unit: { type: 'string', example: 'PM001' },
       zone: { type: 'string', example: 'INGRESO-POR-MUELLE-PROMARISCO' },
+      group: { type: 'string', nullable: true, example: 'CAMARONERAS' },
       entryTime: {
         type: 'string',
         nullable: true,
@@ -24,12 +25,14 @@ export const zoneTimeResponseSchema = {
     {
       unit: 'PM001',
       zone: 'INGRESO-POR-MUELLE-PROMARISCO',
+      group: 'CAMARONERAS',
       entryTime: '2025-12-02T12:16:09.000Z',
       exitTime: '2025-12-02T12:22:09.000Z',
     },
     {
       unit: 'PM002',
       zone: 'PROMARISCO-DURAN',
+      group: 'HIELERAS',
       entryTime: '2025-12-02T10:00:00.000Z',
       exitTime: null,
     },

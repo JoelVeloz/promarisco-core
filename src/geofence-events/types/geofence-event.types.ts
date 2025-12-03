@@ -12,6 +12,7 @@ export interface GeofenceZoneGroup {
 export interface ZoneTime {
   unit: string;
   zone: string;
+  group?: string;
   entryTime: Date | null;
   exitTime: Date | null;
 }
@@ -20,7 +21,7 @@ export interface TransformedPayload {
   UNIT?: string;
   ZONE?: string;
   POS_TIME?: string;
-  POS_TIME_UTC?: Date;
+  POS_TIME_UTC?: string;
   SPEED?: string;
   LOCATION?: string;
   GRUPO_GEOCERCA?: string;

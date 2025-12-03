@@ -27,7 +27,8 @@ export function transformPayload(payload: any): TransformedPayload {
 
   if (fullMatch) {
     const posTime = fullMatch[3]?.trim();
-    const posTimeUTC = posTime ? convertToUTC(posTime) : undefined;
+    const posTimeUTCDate = posTime ? convertToUTC(posTime) : undefined;
+    const posTimeUTC = posTimeUTCDate ? posTimeUTCDate.toISOString() : undefined;
 
     return {
       UNIT: fullMatch[1]?.trim(),
@@ -46,7 +47,8 @@ export function transformPayload(payload: any): TransformedPayload {
 
   if (stopMatch) {
     const posTime = stopMatch[2]?.trim();
-    const posTimeUTC = posTime ? convertToUTC(posTime) : undefined;
+    const posTimeUTCDate = posTime ? convertToUTC(posTime) : undefined;
+    const posTimeUTC = posTimeUTCDate ? posTimeUTCDate.toISOString() : undefined;
 
     return {
       UNIT: stopMatch[1]?.trim(),

@@ -17,22 +17,22 @@ export class GeofenceEventsController {
   @Get('grouped-by-name')
   @ApiOperation({ summary: 'Eventos agrupados por nombre' })
   @ApiResponse({ status: 200, schema: geofenceEventGroupResponseSchema })
-  async getGroupedByName(): Promise<GeofenceEventGroup[]> {
-    return this.geofenceEventsService.groupByName();
+  async getGroupedByName(@Query() query: FindAllGeofenceEventsDto): Promise<GeofenceEventGroup[]> {
+    return this.geofenceEventsService.groupByName(query);
   }
 
   @Get('grouped-by-zone')
   @ApiOperation({ summary: 'Eventos agrupados por zona' })
   @ApiResponse({ status: 200, schema: geofenceEventGroupResponseSchema })
-  async getGroupedByZone(): Promise<GeofenceEventGroup[]> {
-    return this.geofenceEventsService.groupByZone();
+  async getGroupedByZone(@Query() query: FindAllGeofenceEventsDto): Promise<GeofenceEventGroup[]> {
+    return this.geofenceEventsService.groupByZone(query);
   }
 
   @Get('zone-times')
   @ApiOperation({ summary: 'Tiempos de permanencia por zona y unidad (viajes)' })
   @ApiResponse({ status: 200, schema: zoneTimeResponseSchema })
-  async getZoneTimes(): Promise<ZoneTime[]> {
-    return this.geofenceEventsService.getZoneTimes();
+  async getZoneTimes(@Query() query: FindAllGeofenceEventsDto): Promise<ZoneTime[]> {
+    return this.geofenceEventsService.getZoneTimes(query);
   }
 
   @Get()
