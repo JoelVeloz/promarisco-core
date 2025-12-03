@@ -63,8 +63,58 @@ export function transformPayload(payload: any): TransformedPayload {
 
 export function getAgrupacionDeGeocerca(geocerca: string): string {
   // LEE ARCHIVO AGREGACIONES_FINALES.JSON
-  const agrupaciones = fs.readFileSync('files/agrupaciones_final.json', 'utf8');
-  const agrupacionesData = JSON.parse(agrupaciones);
+  const agrupacionesData = [
+    {
+      fuente: 'CAMARONERAS',
+      geocercas: [
+        'ACUICOLA-CARRIZAL',
+        'ALGARROBOCORP',
+        'BELLITEC',
+        'COMUMAP',
+        'COPACKING-PRORIOSA',
+        'CORP-COSTANERA',
+        'CORPLANEC',
+        'CRISTALMAR',
+        'DARSACOM',
+        'ENGUNGAMAR',
+        'FERASA',
+        'FINCAS-MARINAS',
+        'GREENTRAILCORP',
+        'HARAUTE-S.A.',
+        'ISLA-BELLAVISTA',
+        'ISLA-ESCALANTE',
+        'ISLA-QUIÑONEZ',
+        'ISLA-SANTA-CECILIA',
+        'JESUS-DEL-GRAN-PODER',
+        'JOPISA',
+        'LIMBOMAR',
+        'LIMBOMAR-CHURUTE',
+        'LINGLE-S.A',
+        'LIVELIBERTY',
+        'MARFRISCO',
+        'PANTRUSKO-2',
+        'PISCICOLA-MALECON',
+        'PRODUMAR',
+        'PRODUMAR-DURAN',
+        'RECORCHOLIS-1',
+        'RECORCHOLIS-2',
+        'ROLESA-1',
+        'ROLESA-2',
+      ],
+    },
+    {
+      fuente: 'HIELERAS',
+      geocercas: ['HIELERA-ECUAHIELO', 'HIELERA-FLAKES-ICE', 'HIELERA-FRIGOLOGISTICA', 'HIELERA-FRIO-PACIFICO', 'HIELERA-LOG-ECUATORIANA', 'HIELERA-OCEANICE', 'HIELERA-REFRISTORE'],
+    },
+    {
+      fuente: 'MANFRISCO',
+      geocercas: ['CAMPAMENTO MARFRISCO', 'M17', 'M19', 'M3', 'M33', 'M35', 'M39', 'M4', 'M5', 'M6', 'M7', 'MARFRISCO 2'],
+    },
+    {
+      fuente: 'PROHIBICIONES',
+      geocercas: ['INGRESO-AL-CENTRO', 'PEDRO-J-MONTERO', 'VIRGEN-DE-FATIMA-P2'],
+    },
+  ];
   // BUSCA LA AGRUPACION QUE CONTIENE LA GEOCERCA
   // {
   //   "fuente": "CAMARONERAS",
