@@ -53,7 +53,7 @@ function convertCSVToJSON(csvPath, outputPath) {
 
     const agrupacion = fields[0]?.replace(/"/g, '') || '';
     const unidad = fields[1]?.replace(/"/g, '') || '';
-    const ageocerca = fields[2]?.replace(/"/g, '') || '';
+    const geocerca = fields[2]?.replace(/"/g, '') || '';
     const horaEntrada = fields[3]?.replace(/"/g, '') || '';
     const horaSalida = fields[4]?.replace(/"/g, '') || '';
     const descripcion = fields[5]?.replace(/"/g, '') || '';
@@ -122,7 +122,8 @@ const filesToConvert = [
   'CAMARONERAS.csv',
   'HIELERAS.csv',
   'MANFRISCO.csv',
-  'PROHIBICIONES.csv'
+  'PROHIBICIONES.csv',
+  'GEOREFERENCIAL.csv'
 ];
 
 const oldDataDir = path.join(__dirname, 'files', 'old-data');
