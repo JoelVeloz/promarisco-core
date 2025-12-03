@@ -25,11 +25,11 @@ export class GeofenceEventsService implements OnModuleInit {
 
   async onModuleInit() {
     // de todos limpia el campo transformed
-    await this.prisma.geofenceEvent.updateMany({
-      data: { transformed: null },
-    });
-    this.logger.log('Iniciando proceso de generación de transformed para eventos sin transformar...');
-    this.generateTransformedForMissingEvents();
+    // await this.prisma.geofenceEvent.updateMany({
+    //   data: { transformed: null },
+    // });
+    // this.logger.log('Iniciando proceso de generación de transformed para eventos sin transformar...');
+    // this.generateTransformedForMissingEvents();
   }
 
   private async generateTransformedForMissingEvents(): Promise<void> {
