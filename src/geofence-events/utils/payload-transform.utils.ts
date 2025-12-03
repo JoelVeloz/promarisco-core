@@ -103,6 +103,37 @@ export function getAgrupacionDeGeocerca(geocerca: string): string {
       ],
     },
     {
+      fuente: 'GABARRAS',
+      geocercas: [
+        'AQUACAMARON',
+        'CAMAJOSE',
+        'CORP-COSTANERA',
+        'CRISTALMAR',
+        'DARSACOM',
+        'FERASA',
+        'FIMASA 3',
+        'FINCAS-MARINAS',
+        'HARAUTE-S.A.',
+        'ISLA-BELLAVISTA',
+        'ISLA-ESCALANTE',
+        'ISLA-QUIÑONEZ',
+        'ISLA-SANTA-CECILIA',
+        'JOPISA',
+        'LINGLE-S.A',
+        'MUELLE-BLASTI',
+        'MUELLE-BURGOS',
+        'MUELLE-FRAGATA-GABARRAS',
+        'MUELLE-PROCARGO',
+        'MUELLE-SABANA-GRANDE',
+        'MUELLE-YACHT-CLUB-MACHALA',
+        'PROMARISCO-DURAN',
+        'RECORCHOLIS-1',
+        'RECORCHOLIS-2',
+        'ROLESA-1',
+        'ROLESA-2',
+      ],
+    },
+    {
       fuente: 'GEOREFERENCIAL',
       geocercas: [
         'ACUICOLA-CARRIZAL',
@@ -176,7 +207,6 @@ export function getAgrupacionDeGeocerca(geocerca: string): string {
       geocercas: ['INGRESO-AL-CENTRO', 'PEDRO-J-MONTERO', 'VIRGEN-DE-FATIMA-P2'],
     },
   ];
-
   const agrupacion = agrupacionesData.find((agrupacion: any) => agrupacion.geocercas.includes(geocerca));
   return agrupacion?.fuente || '';
 }

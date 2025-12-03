@@ -123,21 +123,23 @@ const filesToConvert = [
   'HIELERAS.csv',
   'MANFRISCO.csv',
   'PROHIBICIONES.csv',
-  'GEOREFERENCIAL.csv'
+  'GEOREFERENCIAL.csv',
+  'GABARRAS.csv'
 ];
 
-const oldDataDir = path.join(__dirname, 'files', 'old-data');
+const csvDir = path.join(__dirname, 'files', 'csv');
+const jsonDir = path.join(__dirname, 'files', 'json');
 
 filesToConvert.forEach(fileName => {
-  const csvPath = path.join(oldDataDir, fileName);
+  const csvPath = path.join(csvDir, fileName);
   const jsonFileName = fileName.replace('.csv', '.json');
-  const jsonPath = path.join(oldDataDir, jsonFileName);
+  const jsonPath = path.join(jsonDir, jsonFileName);
   
   if (fs.existsSync(csvPath)) {
     console.log(`\n📄 Procesando: ${fileName}`);
     convertCSVToJSON(csvPath, jsonPath);
   } else {
-    console.log(`\n⚠️  Archivo no encontrado: ${fileName}`);
+    console.log(`\n⚠️  Archivo no encontrado: ${csvPath}`);
   }
 });
 

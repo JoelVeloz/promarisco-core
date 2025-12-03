@@ -27,7 +27,8 @@ function flattenJSON(jsonData, sourceName) {
 
 // Función principal
 function flattenAndMerge() {
-  const oldDataDir = path.join(__dirname, 'files', 'old-data');
+  const jsonDir = path.join(__dirname, 'files', 'json');
+  const jsonFlatDir = path.join(__dirname, 'files', 'json-flat');
   const outputDir = path.join(__dirname, 'files');
 
   // Archivos a procesar
@@ -37,16 +38,17 @@ function flattenAndMerge() {
     { jsonFile: 'MANFRISCO.json', sourceName: 'MANFRISCO' },
     { jsonFile: 'PROHIBICIONES.json', sourceName: 'PROHIBICIONES' },
     { jsonFile: 'GEOREFERENCIAL.json', sourceName: 'GEOREFERENCIAL' },
+    { jsonFile: 'GABARRAS.json', sourceName: 'GABARRAS' },
   ];
 
   const allEvents = [];
 
   // Procesar cada archivo JSON
   filesToProcess.forEach(({ jsonFile, sourceName }) => {
-    const jsonPath = path.join(oldDataDir, jsonFile);
+    const jsonPath = path.join(jsonDir, jsonFile);
 
     if (!fs.existsSync(jsonPath)) {
-      console.log(`⚠️  Archivo no encontrado: ${jsonFile}`);
+      console.log(`⚠️  Archivo no encontrado: ${jsonPath}`);
       return;
     }
 
@@ -60,7 +62,7 @@ function flattenAndMerge() {
       const flattened = flattenJSON(jsonData, sourceName);
 
       // Guardar el JSON aplanado individual
-      const flattenedPath = path.join(oldDataDir, jsonFile.replace('.json', '-flat.json'));
+      const flattenedPath = path.join(jsonFlatDir, jsonFile.replace('.json', '-flat.json'));
       fs.writeFileSync(flattenedPath, JSON.stringify(flattened, null, 2), 'utf-8');
 
       console.log(`   ✅ Aplanado: ${flattened.length} eventos`);
