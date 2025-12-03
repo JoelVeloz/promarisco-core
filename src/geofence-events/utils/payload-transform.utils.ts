@@ -37,7 +37,7 @@ export function transformPayload(payload: any): TransformedPayload {
       POS_TIME_UTC: posTimeUTC,
       SPEED: fullMatch[4]?.trim(),
       LOCATION: fullMatch[5]?.trim(),
-      GRUPO_GEOCERCA: getAgrupacionDeGeocerca(fullMatch[2]?.trim()),
+      GRUPO_GEOCERCA: getAgrupacionDeGeocerca(fullMatch[2]?.trim()) || fullMatch[6]?.trim(),
     };
   }
 
