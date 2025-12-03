@@ -132,8 +132,16 @@ export class GeofenceEventsService implements OnModuleInit {
   }
 
   async getZoneTimes(): Promise<ZoneTime[]> {
-    const docs = ((await this.prisma.$runCommandRaw({ find: 'zone_times', sort: { entryTime: 1 } })) as any).cursor?.firstBatch || [];
-    return docs.map((d: any) => ({
+    const docs = (await this.prisma.$runCommandRaw({
+      aggregate: 'zone_times',
+      pipeline: [{ $sort: { entryTime: -1 } }, { $limit: 20000 }],
+      cursor: { batchSize: 2000 },
+    })) as any;
+
+    const allDocs = docs.cursor?.firstBatch || [];
+    console.log(`Total documentos cargados: ${allDocs.length}`);
+
+    return allDocs.map((d: any) => ({
       unit: d.unit,
       zone: d.zone,
       entryTime: d.entryTime?.$date,

@@ -23,4 +23,5 @@ export interface TransformedPayload {
   POS_TIME_UTC?: Date;
   SPEED?: string;
   LOCATION?: string;
+  GRUPO_GEOCERCA?: string;
 }

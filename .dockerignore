@@ -17,3 +17,5 @@ jest.config.js
 .eslintrc.js
 .DS_Store
 *.log
+
+files/*

@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+
 import { TransformedPayload } from '../types/geofence-event.types';
 import { convertToUTC } from './date.utils';
 
@@ -19,7 +21,8 @@ export function transformPayload(payload: any): TransformedPayload {
   }
 
   // Regex para formato completo: "entró en" o "salió de" (con ZONE y SPEED)
-  const fullPattern = /^(.+?)\s+(?:entró en|salió de)\s+(.+?)\s+el\s+(.+?)\s+con una velocidad de\s+(.+?)\s+cerca de\s+'(.+?)'\.?$/;
+  // También captura GRUPO_GEOCERCA después del punto
+  const fullPattern = /^(.+?)\s+(?:entró en|salió de)\s+(.+?)\s+el\s+(.+?)\s+con una velocidad de\s+(.+?)\s+cerca de\s+'(.+?)'\.\s*(.*)$/;
   const fullMatch = payloadKey.match(fullPattern);
 
   if (fullMatch) {
@@ -33,6 +36,7 @@ export function transformPayload(payload: any): TransformedPayload {
       POS_TIME_UTC: posTimeUTC,
       SPEED: fullMatch[4]?.trim(),
       LOCATION: fullMatch[5]?.trim(),
+      GRUPO_GEOCERCA: getAgrupacionDeGeocerca(fullMatch[2]?.trim()) || fullMatch[6]?.trim(),
     };
   }
 
@@ -53,4 +57,22 @@ export function transformPayload(payload: any): TransformedPayload {
   }
 
   return {};
+}
+
+export function getAgrupacionDeGeocerca(geocerca: string): string {
+  // LEE ARCHIVO AGREGACIONES_FINALES.JSON
+  const agrupaciones = fs.readFileSync('files/agrupaciones_final.json', 'utf8');
+  const agrupacionesData = JSON.parse(agrupaciones);
+  // BUSCA LA AGRUPACION QUE CONTIENE LA GEOCERCA
+  // {
+  //   "fuente": "CAMARONERAS",
+  //   "geocercas": [
+  //     "ACUICOLA-CARRIZAL",
+  //     "ALGARROBOCORP",
+  //     "BELLITEC"
+  //
+  // ,
+
+  const agrupacion = agrupacionesData.find((agrupacion: any) => agrupacion.geocercas.includes(geocerca));
+  return agrupacion?.fuente || '';
 }
