@@ -7,7 +7,7 @@ import { config } from './config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors();
+  app.enableCors({ origin: config.FRONTEND_CLIENT_URL, credentials: true });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

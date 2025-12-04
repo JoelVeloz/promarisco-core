@@ -15,11 +15,12 @@ export const auth = betterAuth({
   emailAndPassword: { enabled: true, requireEmailVerification: false },
   secret: config.AUTH_SECRET,
   plugins: [admin(), jwt()],
+  hooks: {},
   advanced: {
     crossSubDomainCookies: { enabled: false },
     useSecureCookies: true,
     cookie: { sameSite: 'none', secure: true },
     defaultCookieAttributes: { sameSite: 'none', secure: true },
-    database: { generateId: () => randomUUID() },
+    database: { generateId: false },
   },
 });
