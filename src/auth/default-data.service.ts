@@ -10,14 +10,10 @@ export class DefaultDataService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit() {
-    await this.createDefaultUser();
+    await this.createDefaultUser('proyectos@grupoalconsa.com', '12345678', 'Usuario Proyectos');
   }
 
-  async createDefaultUser() {
-    const defaultEmail = 'proyectos@grupoalconsa.com';
-    const defaultPassword = '12345678';
-    const defaultName = 'Usuario Proyectos';
-
+  async createDefaultUser(defaultEmail: string, defaultPassword: string, defaultName: string) {
     try {
       // Verificar si el usuario ya existe
       const existingUser = await this.prisma.user.findUnique({ where: { email: defaultEmail } });
