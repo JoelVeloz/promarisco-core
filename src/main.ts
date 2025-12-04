@@ -28,7 +28,7 @@ async function bootstrap() {
 
   const swaggerConfig = new DocumentBuilder().setTitle('Promarisco Core API').setVersion('1.0').build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
-  const { apiReference } = await eval("import('@scalar/nestjs-api-reference')");
+  const { apiReference } = await import('@scalar/nestjs-api-reference');
   app.use('/api', apiReference({ content: document }));
   // SwaggerModule.setup('api', app, document);
 
