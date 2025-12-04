@@ -1,5 +1,5 @@
 # Usar la imagen base de Node.js en Alpine
-FROM node:20.18.0-alpine3.20
+FROM node:22.13.1-alpine3.20
 
 # Establecer la zona horaria
 ENV TZ=America/Guayaquil
