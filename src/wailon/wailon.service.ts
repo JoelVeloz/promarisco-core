@@ -34,7 +34,7 @@ export class WailonService implements OnModuleInit {
     this.logger.log('Inicializando módulo Wailon - procesando reportes iniciales...');
     const meses = 2;
     const minutos = meses * 30 * 24 * 60;
-    const delayMinutes = 1 * 60 * 1000;
+    const delayMinutes = 20 * 60 * 1000;
 
     this.procesarReportesWailon(minutos, delayMinutes);
   }
@@ -132,8 +132,8 @@ export class WailonService implements OnModuleInit {
             group: REPORT_LABELS[tipoReporte].name,
             unit: row.c[1],
             zone: row.c[2],
-            entryTime: DateTime.fromSeconds(row.t1).toISO() as string,
-            exitTime: DateTime.fromSeconds(row.t2).toISO() as string,
+            entryTime: DateTime.fromSeconds((row.c[3] as any).v).toISO() as string,
+            exitTime: DateTime.fromSeconds((row.c[4] as any).v).toISO() as string,
           } as InputJsonValue,
           data: row as unknown as JsonValue,
         })),
@@ -151,8 +151,8 @@ export class WailonService implements OnModuleInit {
               group: REPORT_LABELS[tipoReporte].name,
               unit: row.c[1],
               zone: row.c[2],
-              entryTime: DateTime.fromSeconds(row.t1).toISO() as string,
-              exitTime: DateTime.fromSeconds(row.t2).toISO() as string,
+              entryTime: DateTime.fromSeconds((row.c[3] as any).v).toISO() as string,
+              exitTime: DateTime.fromSeconds((row.c[4] as any).v).toISO() as string,
             } as InputJsonValue,
             data: row as unknown as JsonValue,
           },
