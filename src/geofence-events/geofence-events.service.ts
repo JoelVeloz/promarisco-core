@@ -4,6 +4,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { GeofenceEvent } from '@prisma/client';
 import { PaginationResult } from '../common/interfaces/pagination-result.interface';
 import { PrismaService } from '../prisma/prisma.service';
+import { WailonService } from 'src/wailon/wailon.service';
 import { transformPayload } from './utils/payload-transform.utils';
 
 interface GetAllFilters {
@@ -151,12 +152,11 @@ export class GeofenceEventsService implements OnModuleInit {
 
     return result as unknown as GeofenceEventGroup[];
   }
-
-  async getZoneTimes(filters?: GetAllFilters): Promise<ZoneTime[]> {
+  async getZoneTimes(filters?: GetAllFilters): Promise<[]> {
     const docs = (await this.prisma.$runCommandRaw({
-      aggregate: 'zone_times',
+      aggregate: 'report_zones',
       pipeline: [{ $sort: { entryTime: -1 } }, { $limit: 20000 }],
-      cursor: { batchSize: 2000 },
+      cursor: { batchSize: 20000 },
     })) as any;
 
     const allDocs = docs.cursor?.firstBatch || [];
@@ -176,58 +176,95 @@ export class GeofenceEventsService implements OnModuleInit {
     const limit = filters?.limit || 10;
     const skip = (page - 1) * limit;
 
-    const events = await this.prisma.geofenceEvent.findMany();
+    // Construir el pipeline de agregación con filtros
+    const pipeline: any[] = [];
 
-    let filteredEvents = events;
+    // Aplicar filtros en el pipeline
+    const matchConditions: any = {};
 
-    if (filters && (filters.unit || filters.startTime || filters.endTime || filters.name || filters.zone || filters.group)) {
-      filteredEvents = events.filter((event) => {
-        if (filters.name && event.name !== filters.name) {
-          return false;
-        }
-
-        const transformed = event.transformed as TransformedPayload | null;
-
-        if (!transformed) {
-          return false;
-        }
-
-        if (filters.unit && transformed.UNIT !== filters.unit) {
-          return false;
-        }
-
-        if (filters.zone && transformed.ZONE !== filters.zone) {
-          return false;
-        }
-
-        if (filters.group && transformed.GRUPO_GEOCERCA !== filters.group) {
-          return false;
-        }
-
-        if (filters.startTime || filters.endTime) {
-          const posTimeUTC = transformed.POS_TIME_UTC;
-          if (!posTimeUTC) {
-            return false;
-          }
-
-          const posTimeDate = typeof posTimeUTC === 'string' ? new Date(posTimeUTC) : posTimeUTC;
-
-          if (filters.startTime && posTimeDate < new Date(filters.startTime)) {
-            return false;
-          }
-
-          if (filters.endTime && posTimeDate > new Date(filters.endTime)) {
-            return false;
-          }
-        }
-
-        return true;
-      });
+    if (filters?.unit) {
+      matchConditions.unit = filters.unit;
     }
 
-    const total = filteredEvents.length;
+    if (filters?.zone) {
+      matchConditions.zone = filters.zone;
+    }
+
+    if (filters?.group) {
+      matchConditions.group = filters.group;
+    }
+
+    // Filtrar por fechas usando entryTime
+    if (filters?.startTime || filters?.endTime) {
+      matchConditions.entryTime = {};
+      if (filters.startTime) {
+        matchConditions.entryTime.$gte = new Date(filters.startTime);
+      }
+      if (filters.endTime) {
+        matchConditions.entryTime.$lte = new Date(filters.endTime);
+      }
+    }
+
+    if (Object.keys(matchConditions).length > 0) {
+      pipeline.push({ $match: matchConditions });
+    }
+
+    // Ordenar por entryTime descendente
+    pipeline.push({ $sort: { entryTime: -1 } });
+
+    // Contar total antes de paginar
+    const countPipeline = [...pipeline, { $count: 'total' }];
+    const countResult = (await this.prisma.$runCommandRaw({
+      aggregate: 'report_zones',
+      pipeline: countPipeline,
+      cursor: { batchSize: 1 },
+    })) as any;
+
+    const total = countResult.cursor?.firstBatch?.[0]?.total || 0;
+
+    // Aplicar paginación
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: limit });
+
+    // Ejecutar la consulta
+    const docs = (await this.prisma.$runCommandRaw({
+      aggregate: 'report_zones',
+      pipeline: pipeline,
+      cursor: { batchSize: limit },
+    })) as any;
+
+    const allDocs = docs.cursor?.firstBatch || [];
+
+    // Transformar los documentos de la vista a formato GeofenceEvent
+    const paginatedEvents = allDocs.map((d: any) => {
+      // Construir el objeto transformed basado en los datos de la vista
+      const transformed: TransformedPayload = {
+        UNIT: d.unit,
+        ZONE: d.zone,
+        GRUPO_GEOCERCA: d.group,
+      };
+
+      // Usar entryTime como POS_TIME_UTC si está disponible
+      if (d.entryTime) {
+        const entryDate = d.entryTime?.$date ? new Date(d.entryTime.$date) : d.entryTime;
+        transformed.POS_TIME_UTC = entryDate.toISOString();
+      }
+
+      // Crear un objeto GeofenceEvent compatible
+      const entryDate = d.entryTime?.$date ? new Date(d.entryTime.$date) : d.entryTime || new Date();
+      const exitDate = d.exitTime?.$date ? new Date(d.exitTime.$date) : d.exitTime || new Date();
+
+      return {
+        id: d._id?.$oid || d._id || '',
+        name: filters?.name || 'ENTRADA_GEOCERCA', // Usar el filtro name si existe, sino un valor por defecto
+        payload: null,
+        transformed: transformed as any,
+        createdAt: entryDate,
+        updatedAt: exitDate,
+      } as GeofenceEvent;
+    });
+
     const totalPages = Math.ceil(total / limit);
-    const paginatedEvents = filteredEvents.slice(skip, skip + limit);
 
     return {
       data: paginatedEvents,

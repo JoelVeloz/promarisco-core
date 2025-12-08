@@ -19,6 +19,9 @@ const envSchema = z.object({
   // Auth
   AUTH_SECRET: z.string(),
   BASE_URL: z.url(),
+
+  // Wailon
+  WAILON_TOKEN: z.string(),
 });
 
 export const config = (() => {
