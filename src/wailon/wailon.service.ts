@@ -61,7 +61,7 @@ export class WailonService {
     this.logger.verbose('✓ Proceso completo para todos los tipos de reporte finalizado');
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async procesarReportesWailonCron() {
     this.logger.verbose('Ejecutando cron job de reportes Wailon (cada 5 segundos)');
     const dias = 0.25;
