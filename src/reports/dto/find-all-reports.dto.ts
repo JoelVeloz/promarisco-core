@@ -3,7 +3,7 @@ import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
-export class FindAllGeofenceEventsDto {
+export class FindAllReportsDto {
   @ApiProperty({
     required: false,
     description: 'Filtrar por unidad',

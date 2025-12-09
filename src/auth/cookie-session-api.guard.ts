@@ -36,10 +36,10 @@ export class CookieSessionApiGuard implements CanActivate {
   private extractCookies(request: Request): string {
     // Obtener cookies del header
     const cookieHeader = request.headers.cookie || '';
-    
+
     // También verificar si hay cookies parseadas en el request (por middleware de cookies)
     const parsedCookies = (request as { cookies?: Record<string, string> }).cookies;
-    
+
     if (parsedCookies && Object.keys(parsedCookies).length > 0) {
       // Si hay cookies parseadas, reconstruir el header de cookies
       return Object.entries(parsedCookies)
@@ -53,10 +53,7 @@ export class CookieSessionApiGuard implements CanActivate {
   /**
    * Valida la sesión llamando a la API de autenticación usando cookies
    */
-  private async validateSessionWithApi(
-    request: Request,
-    cookies: string,
-  ): Promise<{ session: unknown; user: unknown }> {
+  private async validateSessionWithApi(request: Request, cookies: string): Promise<{ session: unknown; user: unknown }> {
     try {
       // Llamar a la API de autenticación pasando las cookies de sesión
       const response = await fetch(`${config.BASE_URL}/auth/get-session`, {
@@ -65,7 +62,7 @@ export class CookieSessionApiGuard implements CanActivate {
           Cookie: cookies,
           // Incluir otros headers relevantes para mantener el contexto
           'User-Agent': request.headers['user-agent'] || '',
-          'Accept': request.headers.accept || 'application/json',
+          Accept: request.headers.accept || 'application/json',
         },
         credentials: 'include', // Asegurar que las cookies se incluyan en la petición
       });
@@ -92,4 +89,3 @@ export class CookieSessionApiGuard implements CanActivate {
     }
   }
 }
-

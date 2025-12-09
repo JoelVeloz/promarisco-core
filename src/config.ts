@@ -8,25 +8,22 @@ const envSchema = z.object({
   // General
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.url(),
-
-  // Howen VSS
-  HOWEN_VSS_SERVER_IP: z.string(),
-  HOWEN_VSS_USERNAME: z.string(),
-  HOWEN_VSS_PASSWORD: z.string(),
-
   FRONTEND_CLIENT_URL: z.url(),
-
   // Auth
   AUTH_SECRET: z.string(),
   BASE_URL: z.url(),
-
   // Wailon
   WAILON_TOKEN: z.string(),
+  // SMTP
+  SMTP_HOST: z.string(),
+  SMTP_PORT: z.coerce.number().int().positive(),
+  SMTP_SECURE: z.coerce.boolean().default(false),
+  SMTP_USER: z.string(),
+  SMTP_PASSWORD: z.string(),
+  SMTP_FROM: z.string().optional(),
 });
 
 export const config = (() => {
-  // Debug: ver el valor raw de la variable de entorno
-
   const { success, data, error } = envSchema.safeParse(process.env);
 
   if (!success) {

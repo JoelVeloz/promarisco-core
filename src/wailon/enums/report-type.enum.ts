@@ -23,4 +23,3 @@ export const REPORT_LABELS: Record<ReportType, { id: string; name: string }> = {
     name: 'PROHIBICIONES',
   },
 };
-

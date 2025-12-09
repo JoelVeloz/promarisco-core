@@ -9,7 +9,7 @@ const SESSION_TIMEOUT_MINUTES = 5;
 const host = 'hst-api.wialon.eu';
 
 // Función helper para esperar
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Obtiene o regenera la sesión (eid) verificando si han pasado 5 minutos o más

@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
     provider = "prisma-client-js"
 }
@@ -9,42 +6,6 @@ datasource db {
     provider = "mongodb"
     url      = env("DATABASE_URL")
 }
-
-model Alert {
-    id        String   @id @default(auto()) @map("_id") @db.ObjectId
-    name      String
-    metadata  Json?
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("alerts")
-}
-
-model GeofenceEvent {
-    id          String @id @default(auto()) @map("_id") @db.ObjectId
-    name        String
-    payload     Json?
-    transformed Json?
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("geofence_events")
-}
-
-// model AlertCode {
-//     id           String   @id @default(auto()) @map("_id") @db.ObjectId
-//     code         String
-//     providerName String
-//     name         String
-//     description  String?
-//     createdAt    DateTime @default(now())
-//     updatedAt    DateTime @updatedAt
-
-//     @@index([code])
-//     @@index([providerName])
-//     @@map("alert_codes")
-// }
 
 model User {
     id            String    @id @default(auto()) @map("_id") @db.ObjectId

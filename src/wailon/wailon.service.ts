@@ -32,9 +32,9 @@ export class WailonService implements OnModuleInit {
    */
   async onModuleInit() {
     this.logger.log('Inicializando módulo Wailon - procesando reportes iniciales...');
-    const meses = 2;
+    const meses = 1;
     const minutos = meses * 30 * 24 * 60;
-    const delayMinutes = 20 * 60 * 1000;
+    const delayMinutes = 40 * 60 * 1000;
 
     this.procesarReportesWailon(minutos, delayMinutes);
   }
@@ -56,7 +56,7 @@ export class WailonService implements OnModuleInit {
       try {
         this.logger.log(`Iniciando procesamiento para tipo de reporte: ${tipoReporte}`);
         await this.ejecutarReporteCompleto({ fechaDesde, fechaHasta, tipoReporte });
-        await new Promise((resolve) => setTimeout(resolve, delayMinutes));
+        await new Promise(resolve => setTimeout(resolve, delayMinutes));
       } catch (error) {
         this.logger.error(`Error al procesar reporte ${tipoReporte}:`, error);
       }
@@ -126,7 +126,7 @@ export class WailonService implements OnModuleInit {
     // Insertar nuevos registros
     if (newReportRows.length > 0) {
       await this.prisma.wailonReport.createMany({
-        data: newReportRows.map((row) => ({
+        data: newReportRows.map(row => ({
           name: reportName,
           transformed: {
             group: REPORT_LABELS[tipoReporte].name,
@@ -178,7 +178,7 @@ export class WailonService implements OnModuleInit {
       const filePath = join(process.cwd(), fileName);
 
       // Agregar el tipo de reporte a cada item para referencia
-      const reportDataWithType = reportRows.map((item) => ({
+      const reportDataWithType = reportRows.map(item => ({
         ...item,
         tipoReporte,
         tipoReporteName: reportLabel.name,
