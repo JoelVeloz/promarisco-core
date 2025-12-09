@@ -32,9 +32,9 @@ export class WailonService implements OnModuleInit {
    */
   async onModuleInit() {
     this.logger.log('Inicializando módulo Wailon - procesando reportes iniciales...');
-    const meses = 1;
+    const meses = 2;
     const minutos = meses * 30 * 24 * 60;
-    const delayMinutes = 40 * 60 * 1000;
+    const delayMinutes = 60 * 60 * 1000;
 
     this.procesarReportesWailon(minutos, delayMinutes);
   }
@@ -42,7 +42,6 @@ export class WailonService implements OnModuleInit {
   /**
    * Cron job que se ejecuta cada 5 segundos para procesar reportes de Wialon
    */
-  // @Cron('*/60 * * * * *')
   async procesarReportesWailon(minutes: number, delayMinutes: number) {
     this.logger.verbose('Ejecutando cron job de reportes Wailon (cada 5 segundos)');
 
@@ -62,6 +61,15 @@ export class WailonService implements OnModuleInit {
       }
     }
     this.logger.log('✓ Proceso completo para todos los tipos de reporte finalizado');
+  }
+
+  @Cron('*/5 * * * * *')
+  async procesarReportesWailonCron() {
+    this.logger.verbose('Ejecutando cron job de reportes Wailon (cada 5 segundos)');
+    const dias = 1;
+    const minutos = dias * 24 * 60;
+    const delayMinutes = 5 * 60 * 1000;
+    await this.procesarReportesWailon(minutos, delayMinutes);
   }
 
   /**
