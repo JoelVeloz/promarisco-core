@@ -44,4 +44,29 @@ export class EmailService {
       throw error;
     }
   }
+
+  async sendResetToken(username, email, url: string) {
+    const subject = 'Código de recuperación de contraseña';
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>${subject}</h2>
+        <p>Tu código de verificación es:</p>
+        <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+          <a href="${url}">Reset Password</a>
+        </div>
+      </div>
+    `;
+    try {
+      await this.transporter.sendMail({
+        from: config.SMTP_FROM || config.SMTP_USER,
+        to: email,
+        subject,
+        html,
+      });
+    } catch (error) {
+      console.error(`Error al enviar correo a ${email}:`, error);
+      throw error;
+    }
+  }
 }

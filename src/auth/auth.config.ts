@@ -12,21 +12,29 @@ const prismaService = new PrismaService();
 const emailService = new EmailService();
 
 export const auth = betterAuth({
+  // baseURL: config.FRONTEND_CLIENT_URL,
   trustedOrigins: [config.FRONTEND_CLIENT_URL, 'http://localhost:3000'],
   basePath: '/auth',
   database: prismaAdapter(prismaService, { provider: 'postgresql' }),
-  emailAndPassword: { enabled: true, requireEmailVerification: false },
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: false,
+    // sendResetPassword: async ({ user, url }) => {
+    //   await emailService.sendResetToken(user.name, user.email, url);
+    // },
+  },
+
   secret: config.AUTH_SECRET,
   plugins: [
     admin(),
     jwt(),
-    emailOTP({
-      otpLength: 8,
-      expiresIn: 600,
-      sendVerificationOTP: async ({ email, otp, type }) => {
-        await emailService.sendOTP(email, otp, type);
-      },
-    }),
+    // emailOTP({
+    //   otpLength: 8,
+    //   expiresIn: 600,
+    //   sendVerificationOTP: async ({ email, otp, type }) => {
+    //     await emailService.sendOTP(email, otp, type);
+    //   },
+    // }),
   ],
   hooks: {},
   advanced: {

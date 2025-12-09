@@ -10,7 +10,7 @@ export class DefaultDataService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit() {
-    await this.createDefaultUser('proyectos@grupoalconsa.com', '12345678', 'Usuario Proyectos');
+    await this.createDefaultUser('proyectos@grupoalconsa.com', 'Pro2025@!', 'Usuario Proyectos');
   }
 
   async createDefaultUser(defaultEmail: string, defaultPassword: string, defaultName: string) {
