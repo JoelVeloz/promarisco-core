@@ -43,6 +43,15 @@ export class ReportsService {
 
     const result = docs.cursor?.firstBatch || [];
 
-    return result.map((d: any) => ({ unit: d.unit, zone: d.zone, group: d.group, entryTime: d.entryTime?.$date, exitTime: d.exitTime?.$date }));
+    return result.map((d: any) => ({
+      unit: d.unit,
+      zone: d.zone,
+      group: d.group,
+      entryTime: d.entryTime?.$date,
+      exitTime: d.exitTime?.$date,
+      distance: d.distance,
+      fuel: d.fuel,
+      fuelConsumption: d.fuelConsumption,
+    }));
   }
 }
