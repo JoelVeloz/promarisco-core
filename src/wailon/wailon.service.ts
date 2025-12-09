@@ -65,23 +65,4 @@ export class WailonService implements OnModuleInit {
       this.logger.error('Error al ejecutar reporte cada minuto:', error);
     }
   }
-
-  // @Cron(CronExpression.EVERY_MINUTE)
-  // async procesarReportesWailonCron() {
-  //   this.logger.verbose('INICIO PROCESAMIENTO DE REPORTES DE WIALON');
-
-  //   const fechaDesde = DateTime.now().minus({ minutes: minutes }).toISO() as string;
-  //   const fechaHasta = DateTime.now().toISO() as string;
-
-  //   // Ejecutar secuencialmente para todos los tipos de reporte
-  //   const tiposReporte = Object.values(ReportType);
-
-  //   for (const tipoReporte of tiposReporte) {
-  //     this.logger.log(`Iniciando procesamiento para tipo de reporte: ${tipoReporte} - ${REPORT_LABELS[tipoReporte].name}`);
-  //     await this.ejecutarReporteDeUnidades({ fechaDesde, fechaHasta, tipoReporte });
-  //     // await new Promise(resolve => setTimeout(resolve, delayMinutes));
-  //     await new Promise(resolve => setTimeout(resolve, 15 * 1000));
-  //   }
-  //   this.logger.verbose('✓ Proceso completo para todos los tipos de reporte finalizado');
-  // }
 }

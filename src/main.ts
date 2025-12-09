@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { config } from './config';
+import { obtenerZonaPorGeocerca } from './wailon/utils/geocercas';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -30,5 +31,8 @@ async function bootstrap() {
 
   await app.listen(config.PORT);
   console.log(`Server is running on port ${config.PORT}`);
+
+  const t = obtenerZonaPorGeocerca('MARFRISCO');
+  console.log(t);
 }
 bootstrap();

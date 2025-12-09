@@ -8,7 +8,7 @@ import { DateTime } from 'luxon';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { config } from '../config';
-import { obtenerZonaPorGeocerca } from 'data/geocercas';
+import { obtenerZonaPorGeocerca } from 'src/wailon/utils/geocercas';
 
 @Injectable()
 export class WailonReportsService {

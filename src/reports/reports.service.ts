@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { obtenerZonaPorGeocerca } from 'src/wailon/utils/geocercas';
 
 interface GetAllFilters {
   unit?: string;
@@ -46,7 +47,7 @@ export class ReportsService {
     return result.map((d: any) => ({
       unit: d.unit,
       zone: d.zone,
-      group: d.group,
+      group: obtenerZonaPorGeocerca(d.zone),
       entryTime: d.entryTime?.$date,
       exitTime: d.exitTime?.$date,
       distance: d.distance,

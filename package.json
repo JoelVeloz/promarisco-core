@@ -18,7 +18,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "prettier": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\""
+    "prettier": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "generate:geocercas": "ts-node scripts/generate-geocercas.ts",
+    "transform:reports": "ts-node scripts/transform-wailon-reports.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

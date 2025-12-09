@@ -27,7 +27,7 @@ export class WailonGeofencesService {
 
     // Calcular fechas: última semana
     const fechaHasta = DateTime.now();
-    const fechaDesde = fechaHasta.minus({ weeks: 2 });
+    const fechaDesde = fechaHasta.minus({ months: 2 });
     const fechaFrom = fechaDesde.toUnixInteger();
     const fechaTo = fechaHasta.toUnixInteger();
 
@@ -37,7 +37,9 @@ export class WailonGeofencesService {
     const tiposReporte = Object.values(ReportType);
 
     // Iterar sobre cada zonegroup y ejecutar el reporte
-    for (const zonegroup of tiposReporte) {
+    const dataArray = [ReportType.CAMARONERAS, ReportType.HIELERAS];
+
+    for (const zonegroup of dataArray) {
       try {
         this.logger.log(`Ejecutando reporte de geocercas para zonegroup: ${zonegroup}`);
 
