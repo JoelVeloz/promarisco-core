@@ -104,13 +104,11 @@ export class UsersService {
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const isAdmin = await this.prisma.user.findUnique({ where: { id } });
 
-    if (isAdmin) {
+    if (isAdmin?.email === this.adminEmail) {
       throw new ConflictException('No se puede actualizar el usuario administrador');
     }
     // Verificar que el usuario existe
-    const existingUser = await this.prisma.user.findUnique({
-      where: { id },
-    });
+    const existingUser = await this.prisma.user.findUnique({ where: { id } });
 
     if (!existingUser) {
       throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
