@@ -1,9 +1,6 @@
-import { GeofenceEventGroup, GeofenceZoneGroup, TransformedPayload, ZoneTime } from './types/geofence-event.types';
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { WailonService } from 'src/wailon/wailon.service';
-import { transformPayload } from './utils/payload-transform.utils';
 
 interface GetAllFilters {
   unit?: string;
@@ -45,13 +42,7 @@ export class ReportsService {
     })) as any;
 
     const result = docs.cursor?.firstBatch || [];
-    console.log(result.length);
-    return result.map((d: any) => ({
-      unit: d.unit,
-      zone: d.zone,
-      group: d.group,
-      entryTime: d.entryTime?.$date,
-      exitTime: d.exitTime?.$date,
-    }));
+
+    return result.map((d: any) => ({ unit: d.unit, zone: d.zone, group: d.group, entryTime: d.entryTime?.$date, exitTime: d.exitTime?.$date }));
   }
 }

@@ -1,9 +1,9 @@
 {
   "host": "190.154.12.178",
-  "eid": "51c46f7275c784f206c96e3d12a51082",
-  "gis_sid": "bc726593ee7589b7",
+  "eid": "515f527b4f2996a21d7f9b722a1e1602",
+  "gis_sid": "5e6f616cb8bc209b",
   "au": "proyectos",
-  "tm": 1765267427,
+  "tm": 1765269375,
   "wsdk_version": "1.908.15",
   "base_url": "https://hst-api.wialon.eu",
   "hw_gw_ip": "185.213.1.24",
@@ -122,7 +122,7 @@
     },
     "fl": 4,
     "hm": "",
-    "ld": 1765267427,
+    "ld": 1765269239,
     "pfl": 4,
     "mapps": {
       "1": {

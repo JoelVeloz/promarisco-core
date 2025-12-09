@@ -1,10 +1,10 @@
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InputJsonValue, JsonValue } from '@prisma/client/runtime/library';
 import { REPORT_LABELS, ReportType } from './enums/report-type.enum';
 import { WialonDataPoint, WialonReportData, WialonReportRow } from './types/wailon-report.types';
 import { aplicarResultadoReporte, consultarEstadoReporte, ejecutarReporte, guardarFilasReporte, limpiarResultadoReporte, obtenerFilasReporte, obtenerSesion } from './utils/reports.util';
 
-import { Cron } from '@nestjs/schedule';
 import { DateTime } from 'luxon';
 import { ExecuteReportDto } from './dto/execute-report.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -13,7 +13,7 @@ import { join } from 'path';
 import { writeFile } from 'fs/promises';
 
 @Injectable()
-export class WailonService implements OnModuleInit {
+export class WailonService {
   private readonly logger = new Logger(WailonService.name);
 
   // Valores hardcoded del reporte
@@ -30,20 +30,21 @@ export class WailonService implements OnModuleInit {
    * Se ejecuta al inicializar el módulo
    * Procesa los reportes inmediatamente al iniciar la aplicación
    */
-  async onModuleInit() {
-    this.logger.log('Inicializando módulo Wailon - procesando reportes iniciales...');
-    const meses = 2;
-    const minutos = meses * 30 * 24 * 60;
-    const delayMinutes = 60 * 60 * 1000;
+  // async onModuleInit() {
+  //   this.logger.log('Inicializando módulo Wailon - procesando reportes iniciales...');
+  //   const meses = 2;
+  //   const minutos = meses * 30 * 24 * 60;
 
-    this.procesarReportesWailon(minutos, delayMinutes);
-  }
+  //   const delayMinutes = 1 * 60 * 1000;
+
+  //   this.procesarReportesWailon(minutos, delayMinutes);
+  // }
 
   /**
    * Cron job que se ejecuta cada 5 segundos para procesar reportes de Wialon
    */
   async procesarReportesWailon(minutes: number, delayMinutes: number) {
-    this.logger.verbose('Ejecutando cron job de reportes Wailon (cada 5 segundos)');
+    this.logger.verbose('INICIO PROCESAMIENTO DE REPORTES DE WIALON');
 
     const fechaDesde = DateTime.now().minus({ minutes: minutes }).toISO() as string;
     const fechaHasta = DateTime.now().toISO() as string;
@@ -52,24 +53,21 @@ export class WailonService implements OnModuleInit {
     const tiposReporte = Object.values(ReportType);
 
     for (const tipoReporte of tiposReporte) {
-      try {
-        this.logger.log(`Iniciando procesamiento para tipo de reporte: ${tipoReporte}`);
-        await this.ejecutarReporteCompleto({ fechaDesde, fechaHasta, tipoReporte });
-        await new Promise(resolve => setTimeout(resolve, delayMinutes));
-      } catch (error) {
-        this.logger.error(`Error al procesar reporte ${tipoReporte}:`, error);
-      }
+      this.logger.log(`Iniciando procesamiento para tipo de reporte: ${tipoReporte} - ${REPORT_LABELS[tipoReporte].name}`);
+      await this.ejecutarReporteCompleto({ fechaDesde, fechaHasta, tipoReporte });
+      // await new Promise(resolve => setTimeout(resolve, delayMinutes));
+      await new Promise(resolve => setTimeout(resolve, 5 * 1000));
     }
-    this.logger.log('✓ Proceso completo para todos los tipos de reporte finalizado');
+    this.logger.verbose('✓ Proceso completo para todos los tipos de reporte finalizado');
   }
 
-  @Cron('*/5 * * * * *')
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async procesarReportesWailonCron() {
     this.logger.verbose('Ejecutando cron job de reportes Wailon (cada 5 segundos)');
-    const dias = 1;
+    const dias = 0.25;
     const minutos = dias * 24 * 60;
-    const delayMinutes = 5 * 60 * 1000;
-    await this.procesarReportesWailon(minutos, delayMinutes);
+    const delaySeconds = 5 * 1000;
+    await this.procesarReportesWailon(minutos, delaySeconds);
   }
 
   /**
@@ -141,7 +139,7 @@ export class WailonService implements OnModuleInit {
             unit: row.c[1],
             zone: row.c[2],
             entryTime: DateTime.fromSeconds((row.c[3] as any).v).toISO() as string,
-            exitTime: DateTime.fromSeconds((row.c[4] as any).v).toISO() as string,
+            exitTime: (row.c[4] as any).v ? (DateTime.fromSeconds((row.c[4] as any).v).toISO() as string) : null,
           } as InputJsonValue,
           data: row as unknown as JsonValue,
         })),
@@ -160,7 +158,7 @@ export class WailonService implements OnModuleInit {
               unit: row.c[1],
               zone: row.c[2],
               entryTime: DateTime.fromSeconds((row.c[3] as any).v).toISO() as string,
-              exitTime: DateTime.fromSeconds((row.c[4] as any).v).toISO() as string,
+              exitTime: (row.c[4] as any).v ? (DateTime.fromSeconds((row.c[4] as any).v).toISO() as string) : null,
             } as InputJsonValue,
             data: row as unknown as JsonValue,
           },
@@ -210,8 +208,7 @@ export class WailonService implements OnModuleInit {
     const fechaTo = fechaHasta.toUnixInteger();
 
     this.logger.verbose(`Ejecutando reporte tipo 
-        ${REPORT_LABELS[params.tipoReporte].name} - 
-        ${params.tipoReporte} desde ${fechaDesde.setZone('America/Guayaquil').toISO()} hasta 
+        ${REPORT_LABELS[params.tipoReporte].name} - ${params.tipoReporte} desde ${fechaDesde.setZone('America/Guayaquil').toISO()} hasta 
         ${fechaHasta.setZone('America/Guayaquil').toISO()}`);
 
     // Paso 1: Obtener o regenerar sesión
@@ -252,6 +249,8 @@ export class WailonService implements OnModuleInit {
     });
 
     // Paso 6: Limpiar resultado del reporte antes de guardar
+    await limpiarResultadoReporte({ eid });
+    await limpiarResultadoReporte({ eid });
     await limpiarResultadoReporte({ eid });
 
     // Paso 7: Guardar en base de datos
