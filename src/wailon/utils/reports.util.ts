@@ -1,8 +1,10 @@
 import { ApplyReportResult, WialonReportData } from '../types/wailon-report.types';
-import { readFile, writeFile } from 'fs/promises';
+import { REPORT_LABELS, ReportType } from '../enums/report-type.enum';
+import { mkdir, readFile, writeFile } from 'fs/promises';
 
 import { DateTime } from 'luxon';
 import { fetchWailon } from './fetch-wailon.util';
+import { join } from 'path';
 
 const SESSION_FILE = 'session.json';
 const SESSION_TIMEOUT_MINUTES = 5;
@@ -84,6 +86,7 @@ export async function ejecutarReporte(params: {
   reportObjectSecId: string;
   fechaFrom: number;
   fechaTo: number;
+  flags: number;
 }): Promise<Record<string, unknown>> {
   console.log('Paso 1: Ejecutando reporte...');
   const execReportParams = {
@@ -92,7 +95,7 @@ export async function ejecutarReporte(params: {
     reportTemplate: null,
     reportObjectId: params.reportObjectId,
     reportObjectSecId: params.reportObjectSecId,
-    interval: { flags: 16777216, from: params.fechaFrom, to: params.fechaTo },
+    interval: { flags: params.flags, from: params.fechaFrom, to: params.fechaTo },
     remoteExec: 1,
   };
   const execReportResult = (await fetchWailon('report/exec_report', execReportParams, params.eid, host)) as Record<string, unknown>;
@@ -227,4 +230,26 @@ export async function ejecutarBatch(params: { eid: string; params: Array<{ svc: 
   }
   // Si por alguna razón no es un array, retornar el resultado como único elemento
   return [result];
+}
+
+/**
+ * Guarda el reporte en un archivo JSON local
+ */
+export async function guardarJsonReporte(reportRows: WialonReportData): Promise<void> {
+  try {
+    const timestamp = DateTime.now().toFormat('yyyy-MM-dd_HH-mm-ss');
+    const fileName = `report-rows-${timestamp}.json`;
+
+    // Crear carpeta de reportes si no existe
+    const reportsDir = join(process.cwd(), 'data', 'reports');
+    await mkdir(reportsDir, { recursive: true });
+
+    const filePath = join(reportsDir, fileName);
+
+    await writeFile(filePath, JSON.stringify(reportRows, null, 2), 'utf-8');
+    console.log(`✓ JSON guardado: ${filePath} (${reportRows.length} items)`);
+  } catch (error) {
+    console.error(`Error al guardar JSON:`, error);
+    throw error;
+  }
 }

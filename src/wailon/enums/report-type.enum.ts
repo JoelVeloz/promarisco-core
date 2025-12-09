@@ -1,7 +1,6 @@
 export enum ReportType {
   PROHIBICIONES = '3',
-
-  PISCINAS = '4',
+  PISCINAS = '16',
   CAMARONERAS = '13',
   HIELERAS = '10',
 }

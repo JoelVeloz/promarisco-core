@@ -62,3 +62,6 @@ files/*
 # Scripts
 /scripts
 
+# Reportes de Wialon
+/data/reports
+

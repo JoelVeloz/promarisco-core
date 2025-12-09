@@ -45,12 +45,11 @@ export interface WialonReportRow {
   /** Marca */
   mrk: number;
   /** Array de datos que contiene:
-   * - [0]: Fecha/hora formateada (string)
-   * - [1]: Nombre de la unidad (string, ej: "PM069")
-   * - [2]: Nombre de la zona (string, ej: "COPACKING-COMUMAP")
-   * - [3]: Objeto WialonDataPoint (entrada)
-   * - [4]: Objeto WialonDataPoint (salida) o string con fecha
-   * - [5]: Dirección/ubicación (string)
+   * - [0]: Nombre de la unidad (string, ej: "PM001", "PM002")
+   * - [1]: Nombre de la zona (string, ej: "ISLA-QUIÑONEZ", "Out of geofences")
+   * - [2]: "-----" o WialonDataPoint (punto de entrada)
+   * - [3]: "-----" o WialonDataPoint (punto de salida)
+   * - [4]: Duración formateada (string, ej: "0:00:00", "0:22:56")
    */
   c: Array<string | WialonDataPoint>;
 }
@@ -76,12 +75,11 @@ export interface WialonReportItem {
   /** Marca */
   mrk: number;
   /** Array de datos del reporte que contiene:
-   * - [0]: Nombre de zona (string, ej: "COPACKING-COMUMAP")
-   * - [1]: String vacío
-   * - [2]: String vacío
-   * - [3]: Objeto WialonDataPoint (primera entrada)
-   * - [4]: Objeto WialonDataPoint (última salida)
-   * - [5]: String vacío
+   * - [0]: Nombre de la unidad (string, ej: "PM001", "PM002")
+   * - [1]: String vacío ("")
+   * - [2]: "-----" o WialonDataPoint (punto de entrada)
+   * - [3]: "-----" o WialonDataPoint (punto de salida)
+   * - [4]: Duración formateada (string, ej: "0:00:00", "0:22:56")
    */
   c: WialonCItem[];
   /** Array opcional de sub-reportes detallados por unidad */
