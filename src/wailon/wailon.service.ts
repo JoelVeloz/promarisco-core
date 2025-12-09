@@ -28,17 +28,14 @@ export class WailonService {
 
   /**
    * Se ejecuta al inicializar el módulo
-   * Procesa los reportes inmediatamente al iniciar la aplicación
+   * Actualiza el campo transformed de todos los registros existentes
    */
-  // async onModuleInit() {
-  //   this.logger.log('Inicializando módulo Wailon - procesando reportes iniciales...');
-  //   const meses = 2;
-  //   const minutos = meses * 30 * 24 * 60;
-
-  //   const delayMinutes = 1 * 60 * 1000;
-
-  //   this.procesarReportesWailon(minutos, delayMinutes);
-  // }
+  async onModuleInit() {
+    this.logger.log('Inicializando módulo Wailon - actualizando campo transformed...');
+    const meses = 2;
+    // await this.procesarReportesWailon(meses * 30 * 24 * 60, 10 * 1000);
+    // await this.actualizarTransformedTodosRegistros();
+  }
 
   /**
    * Cron job que se ejecuta cada 5 segundos para procesar reportes de Wialon
@@ -56,18 +53,194 @@ export class WailonService {
       this.logger.log(`Iniciando procesamiento para tipo de reporte: ${tipoReporte} - ${REPORT_LABELS[tipoReporte].name}`);
       await this.ejecutarReporteCompleto({ fechaDesde, fechaHasta, tipoReporte });
       // await new Promise(resolve => setTimeout(resolve, delayMinutes));
-      await new Promise(resolve => setTimeout(resolve, 5 * 1000));
+      await new Promise(resolve => setTimeout(resolve, 15 * 1000));
     }
     this.logger.verbose('✓ Proceso completo para todos los tipos de reporte finalizado');
   }
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_MINUTE)
   async procesarReportesWailonCron() {
     this.logger.verbose('Ejecutando cron job de reportes Wailon (cada 5 segundos)');
     const dias = 0.25;
     const minutos = dias * 24 * 60;
-    const delaySeconds = 5 * 1000;
+    const delaySeconds = 10 * 1000;
     await this.procesarReportesWailon(minutos, delaySeconds);
+  }
+
+  /**
+   * Extrae solo la parte numérica de un string que contiene unidades
+   * Ejemplo: "0.30 km" -> 0.30, "10.00 km/gal" -> 10.00
+   */
+  private extraerParteNumerica(valor: string | number | WialonDataPoint | null | undefined): number | null {
+    if (valor === null || valor === undefined) return null;
+    if (typeof valor === 'number') return valor;
+    if (typeof valor === 'object') return null; // Si es WialonDataPoint, retornar null
+    if (typeof valor !== 'string') return null;
+
+    // Extraer solo números, punto decimal y signo negativo
+    const match = valor.match(/-?\d+\.?\d*/);
+    return match ? parseFloat(match[0]) : null;
+  }
+
+  /**
+   * Obtiene el tipo de reporte basado en el nombre del grupo
+   */
+  private obtenerTipoReportePorGrupo(groupName: string): ReportType | null {
+    for (const [tipoReporte, label] of Object.entries(REPORT_LABELS)) {
+      if (label.name === groupName) {
+        return tipoReporte as ReportType;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Genera el objeto transformed basado en una fila de reporte
+   */
+  private generarTransformed(row: WialonReportRow, tipoReporte: ReportType): InputJsonValue {
+    return {
+      group: REPORT_LABELS[tipoReporte].name,
+      unit: row.c[1],
+      zone: row.c[2],
+      entryTime: DateTime.fromSeconds((row.c[3] as any).v).toISO() as string,
+      exitTime: (row.c[4] as any).v ? (DateTime.fromSeconds((row.c[4] as any).v).toISO() as string) : null,
+      distance: this.extraerParteNumerica(row.c[5]),
+      fuel: this.extraerParteNumerica(row.c[6]),
+      fuelConsumption: this.extraerParteNumerica(row.c[7]),
+    } as InputJsonValue;
+  }
+
+  /**
+   * Actualiza el campo transformed de todos los registros existentes
+   * Optimizado usando transacciones de Prisma para agrupar múltiples updates
+   */
+  private async actualizarTransformedTodosRegistros(): Promise<void> {
+    try {
+      this.logger.log('Iniciando actualización masiva del campo transformed...');
+
+      // Obtener todos los registros con data y transformed
+      const todosRegistros = await this.prisma.wailonReport.findMany({
+        where: {
+          data: { not: null },
+        },
+        select: {
+          id: true,
+          data: true,
+          transformed: true,
+        },
+      });
+
+      this.logger.log(`Encontrados ${todosRegistros.length} registros para actualizar`);
+
+      // Pre-procesar todos los registros para preparar las actualizaciones
+      const updates: Array<{ id: string; transformed: InputJsonValue }> = [];
+      let omitidos = 0;
+
+      for (const registro of todosRegistros) {
+        try {
+          // Validar que data existe y es un objeto válido
+          if (!registro.data || typeof registro.data !== 'object' || Array.isArray(registro.data)) {
+            omitidos++;
+            continue;
+          }
+
+          const row = registro.data as unknown as WialonReportRow;
+
+          // Validar estructura básica del row
+          if (!row.c || !Array.isArray(row.c) || row.c.length < 8) {
+            omitidos++;
+            continue;
+          }
+
+          // Obtener tipo de reporte del transformed existente o intentar inferirlo
+          let tipoReporte: ReportType | null = null;
+
+          if (registro.transformed && typeof registro.transformed === 'object' && !Array.isArray(registro.transformed)) {
+            const transformed = registro.transformed as any;
+            if (transformed.group) {
+              tipoReporte = this.obtenerTipoReportePorGrupo(transformed.group);
+            }
+          }
+
+          // Si no se pudo obtener el tipo de reporte, omitir este registro
+          if (!tipoReporte) {
+            omitidos++;
+            continue;
+          }
+
+          // Generar nuevo transformed
+          const nuevoTransformed = this.generarTransformed(row, tipoReporte);
+
+          updates.push({
+            id: registro.id,
+            transformed: nuevoTransformed,
+          });
+        } catch (error) {
+          omitidos++;
+          this.logger.warn(`Error al procesar registro ${registro.id}:`, error);
+        }
+      }
+
+      this.logger.log(`Preparadas ${updates.length} actualizaciones (${omitidos} omitidos)`);
+
+      // Procesar actualizaciones en lotes usando transacciones
+      const batchSize = 1000; // Lotes más grandes gracias a transacciones
+      let actualizados = 0;
+      let errores = 0;
+
+      for (let i = 0; i < updates.length; i += batchSize) {
+        const batch = updates.slice(i, i + batchSize);
+
+        try {
+          // Usar transacción interactiva para agrupar múltiples updates de forma eficiente
+          await this.prisma.$transaction(
+            async tx => {
+              await Promise.all(
+                batch.map(update =>
+                  tx.wailonReport.update({
+                    where: { id: update.id },
+                    data: { transformed: update.transformed },
+                  })
+                )
+              );
+            },
+            {
+              maxWait: 30000, // 30 segundos máximo de espera
+              timeout: 60000, // 60 segundos máximo de ejecución
+            }
+          );
+
+          actualizados += batch.length;
+
+          // Log de progreso
+          if ((i + batchSize) % 5000 === 0 || i + batchSize >= updates.length) {
+            this.logger.log(`Progreso: ${Math.min(i + batchSize, updates.length)}/${updates.length} registros actualizados`);
+          }
+        } catch (error) {
+          errores += batch.length;
+          this.logger.error(`Error en lote de actualizaciones (índices ${i}-${i + batch.length}):`, error);
+
+          // Intentar actualizar individualmente los registros del lote fallido
+          for (const update of batch) {
+            try {
+              await this.prisma.wailonReport.update({
+                where: { id: update.id },
+                data: { transformed: update.transformed },
+              });
+              actualizados++;
+              errores--;
+            } catch (individualError) {
+              this.logger.error(`Error al actualizar registro individual ${update.id}:`, individualError);
+            }
+          }
+        }
+      }
+
+      this.logger.log(`✓ Actualización completada: ${actualizados} actualizados, ${omitidos} omitidos, ${errores} errores`);
+    } catch (error) {
+      this.logger.error('Error al actualizar transformed de todos los registros:', error);
+      throw error;
+    }
   }
 
   /**
@@ -128,19 +301,30 @@ export class WailonService {
         newReportRows.push(row);
       }
     }
-
+    // {
+    //   "t": "09.12.2025 03:02:51",
+    //   "v": 1765249371,
+    //   "y": -2.21519,
+    //   "x": -79.8024444444,
+    //   "u": 600463136
+    // },
+    // {
+    //   "t": "09.12.2025 04:34:12",
+    //   "v": 1765254852,
+    //   "y": -2.21289777778,
+    //   "x": -79.8015288889,
+    //   "u": 600463136
+    // },
+    // "Vía Durán - Virgen De Fátima, Durán, Guayas, Ecuador",
+    // "0.30 km",
+    // "0.03 gal",
+    // "10.00 km/gal"
     // Insertar nuevos registros
     if (newReportRows.length > 0) {
       await this.prisma.wailonReport.createMany({
         data: newReportRows.map(row => ({
           name: reportName,
-          transformed: {
-            group: REPORT_LABELS[tipoReporte].name,
-            unit: row.c[1],
-            zone: row.c[2],
-            entryTime: DateTime.fromSeconds((row.c[3] as any).v).toISO() as string,
-            exitTime: (row.c[4] as any).v ? (DateTime.fromSeconds((row.c[4] as any).v).toISO() as string) : null,
-          } as InputJsonValue,
+          transformed: this.generarTransformed(row, tipoReporte),
           data: row as unknown as JsonValue,
         })),
       });
@@ -153,13 +337,7 @@ export class WailonService {
         await this.prisma.wailonReport.update({
           where: { id },
           data: {
-            transformed: {
-              group: REPORT_LABELS[tipoReporte].name,
-              unit: row.c[1],
-              zone: row.c[2],
-              entryTime: DateTime.fromSeconds((row.c[3] as any).v).toISO() as string,
-              exitTime: (row.c[4] as any).v ? (DateTime.fromSeconds((row.c[4] as any).v).toISO() as string) : null,
-            } as InputJsonValue,
+            transformed: this.generarTransformed(row, tipoReporte),
             data: row as unknown as JsonValue,
           },
         });

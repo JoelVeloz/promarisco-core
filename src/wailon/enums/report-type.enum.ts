@@ -1,11 +1,16 @@
 export enum ReportType {
+  PROHIBICIONES = '3',
+
   PISCINAS = '4',
   CAMARONERAS = '13',
   HIELERAS = '10',
-  PROHIBICIONES = '3',
 }
 
 export const REPORT_LABELS: Record<ReportType, { id: string; name: string }> = {
+  [ReportType.PROHIBICIONES]: {
+    id: '3',
+    name: 'PROHIBICIONES',
+  },
   [ReportType.PISCINAS]: {
     id: '4',
     name: 'PISCINAS',
@@ -17,9 +22,5 @@ export const REPORT_LABELS: Record<ReportType, { id: string; name: string }> = {
   [ReportType.HIELERAS]: {
     id: '10',
     name: 'HIELERAS',
-  },
-  [ReportType.PROHIBICIONES]: {
-    id: '3',
-    name: 'PROHIBICIONES',
   },
 };
