@@ -108,15 +108,15 @@ export class WailonReportsService {
    * @returns El key generado o null si faltan datos requeridos
    */
   private generarKeyDesdeData(rData: WialonReportRow | any): string | null {
-    const uid = rData?.uid;
     const unit = rData?.c?.[0];
     const entryTimestamp = (rData?.c?.[2] as any)?.v;
+    const geocerca = rData?.c?.[0];
 
-    if (!uid || !unit || !entryTimestamp) {
+    if (!unit || !entryTimestamp || !geocerca) {
       return null;
     }
 
-    return `${uid}_${unit}_${entryTimestamp}`;
+    return `${unit}_${entryTimestamp}_${geocerca}`;
   }
 
   /**

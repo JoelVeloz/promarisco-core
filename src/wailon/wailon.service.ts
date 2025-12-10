@@ -17,6 +17,7 @@ export class WailonService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
+    // return;
     this.logger.log('Inicializando módulo Wailon - verificando reporte "NUEVO INFORME"...');
 
     try {
@@ -55,7 +56,7 @@ export class WailonService implements OnModuleInit {
 
     try {
       // Obtener datos desde el último minuto hasta ahora
-      const fechaDesde = DateTime.now().minus({ hours: 6 }).toISO() as string;
+      const fechaDesde = DateTime.now().minus({ hours: 12 }).toISO() as string;
       const fechaHasta = DateTime.now().toISO() as string;
 
       await this.wailonReportsService.ejecutarReporteDeUnidades({ fechaDesde, fechaHasta });

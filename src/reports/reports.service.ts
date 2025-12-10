@@ -44,7 +44,7 @@ export class ReportsService {
 
     const result = docs.cursor?.firstBatch || [];
 
-    return result.map((d: any) => ({
+    const data = result.map((d: any) => ({
       unit: d.unit,
       zone: d.zone,
       group: obtenerZonaPorGeocerca(d.zone),
@@ -54,5 +54,8 @@ export class ReportsService {
       fuel: d.fuel,
       fuelConsumption: d.fuelConsumption,
     }));
+    // sort by entryTime
+    data.sort((a: any, b: any) => a.entryTime - b.entryTime);
+    return data;
   }
 }
