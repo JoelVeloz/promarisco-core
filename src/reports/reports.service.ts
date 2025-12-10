@@ -43,12 +43,7 @@ export class ReportsService {
       }),
     };
 
-    const pipeline: any[] = [
-      ...(Object.keys(matchConditions).length > 0 ? [{ $match: matchConditions }] : []),
-
-      // Ordenar
-      { $sort: { entryTime: -1 } },
-    ];
+    const pipeline: any[] = [...(Object.keys(matchConditions).length > 0 ? [{ $match: matchConditions }] : [])];
     const docs = (await this.prisma.$runCommandRaw({
       aggregate: 'report_zones',
       pipeline,
@@ -56,59 +51,44 @@ export class ReportsService {
     })) as any;
 
     const result = docs.cursor?.firstBatch || [];
+    console.log(result);
 
-    let data = result.map((d: any) => ({
-      unit: d.unit,
-      zone: d.zone,
-      // group: obtenerZonaPorGeocerca(d.zone),
-      group: d.group,
-      entryTime: d.entryTime?.$date,
-      exitTime: d.exitTime?.$date,
-      distance: d.distance,
-      fuel: d.fuel,
-      fuelConsumption: d.fuelConsumption,
-      isCompleted: d.exitTime?.$date ? true : false,
-    }));
+    // // ---------------------------------------------------------
+    // // 1) Eliminar duplicados SOLO en completados (exitTime)
+    // // ---------------------------------------------------------
 
-    // ---------------------------------------------------------
-    // 1) Eliminar duplicados SOLO en completados (exitTime)
-    // ---------------------------------------------------------
+    // const vistosCompletados = new Set<string>();
 
-    const vistosCompletados = new Set<string>();
+    // // filtrar solo completados
+    // const completados = result.filter((d: any) => d.isCompleted);
 
-    // filtrar solo completados
-    const completados = data.filter((d: any) => d.isCompleted && d.exitTime);
+    // const correcionCompletados = completados.filter((d: any) => {
+    //   // Si NO está completado -> no aplicar lógica aquí
+    //   if (!d.isCompleted) return true;
 
-    const correcionCompletados = completados.filter((d: any) => {
-      // Si NO está completado -> no aplicar lógica aquí
-      if (!d.isCompleted) return true;
+    //   const exitFormatted = formatDate(new Date(d.exitTime));
+    //   if (vistosCompletados.has(exitFormatted)) {
+    //     return false; // eliminar duplicado
+    //   }
+    //   vistosCompletados.add(exitFormatted);
+    //   return true; // conservar el primero con ese exitTime
+    // });
 
-      const exitFormatted = formatDate(new Date(d.exitTime));
+    // const latestNoCompleted = new Map<string, any>();
 
-      if (vistosCompletados.has(exitFormatted)) {
-        return false; // eliminar duplicado
-      }
+    // result.forEach((d: any) => {
+    //   if (!d.isCompleted) {
+    //     const prev = latestNoCompleted.get(d.unit);
 
-      vistosCompletados.add(exitFormatted);
-      return true; // conservar el primero con ese exitTime
-    });
+    //     // Si no existe previo o este es más reciente → conservar este
+    //     if (!prev || d.entryTime > prev.entryTime) {
+    //       latestNoCompleted.set(d.unit, d);
+    //     }
+    //   }
+    // });
+    // // Resultado final solo no completados (sin duplicados por unidad)
+    // const noCompletedFinal = Array.from(latestNoCompleted.values());
 
-    const latestNoCompleted = new Map<string, any>();
-
-    data.forEach((d: any) => {
-      if (!d.isCompleted) {
-        const prev = latestNoCompleted.get(d.unit);
-
-        // Si no existe previo o este es más reciente → conservar este
-        if (!prev || d.entryTime > prev.entryTime) {
-          latestNoCompleted.set(d.unit, d);
-        }
-      }
-    });
-
-    // Resultado final solo no completados (sin duplicados por unidad)
-    const noCompletedFinal = Array.from(latestNoCompleted.values());
-
-    return [...correcionCompletados, ...noCompletedFinal].sort((a: any, b: any) => a.entryTime - b.entryTime);
+    return result;
   }
 }
