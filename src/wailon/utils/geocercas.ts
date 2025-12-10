@@ -1,8 +1,53 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const geocercasJsonPath = './src/common/geocercas.json';
-const geocercasData = JSON.parse(fs.readFileSync(geocercasJsonPath, 'utf-8'));
+// const geocercasJsonPath = './src/common/geocercas.json';
+const geocercasData = {
+  CAMARONERAS: [
+    'ACUICOLA-CARRIZAL',
+    'ALGARROBOCORP',
+    'BELLITEC',
+    'CAMAJOSE',
+    'COPACKING-COMUMAP',
+    'COPACKING-PRORIOSA',
+    'CORP-COSTANERA',
+    'CORPLANEC',
+    'CRISTALMAR',
+    'DARSACOM',
+    'ENGUNGAMAR',
+    'FERASA',
+    'FIMASA 3',
+    'FINCAS-MARINAS',
+    'GREENTRAILCORP',
+    'HARAUTE-S.A.',
+    'IPYCA',
+    'ISLA-BELLAVISTA',
+    'ISLA-ESCALANTE',
+    'ISLA-QUIÑONEZ',
+    'ISLA-SANTA-CECILIA',
+    'JESUS-DEL-GRAN-PODER',
+    'JOPISA',
+    'LIMBOMAR',
+    'LIMBOMAR-CHURUTE',
+    'LINGLE-S.A',
+    'LIVELIBERTY',
+    'LUKMAR',
+    'MARFRISCO',
+    'PANTRUSKO-2',
+    'PANTRUSKO-S.A.',
+    'PISCICOLA-MALECON',
+    'PRODUMAR',
+    'PRODUMAR-DURAN',
+    'RECORCHOLIS-1',
+    'RECORCHOLIS-2',
+    'ROLESA-1',
+    'ROLESA-2',
+  ],
+  HIELERAS: ['HIELERA-ECUAHIELO', 'HIELERA-FLAKES-ICE', 'HIELERA-FRIGOLOGISTICA', 'HIELERA-FRIO-PACIFICO', 'HIELERA-LOG-ECUATORIANA', 'HIELERA-OCEANICE', 'HIELERA-REFRISTORE'],
+  PISCINAS_MARFRISCO: ['24'],
+  PISCINAS: ['24', '29', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M17', 'M19', 'M26', 'M27', 'M33', 'M35', 'M39', 'M40', 'M41', 'M42'],
+  PROHIBICIONES: ['INGRESO-AL-CENTRO', 'PEAJE-YAGUACHI', 'PEDRO-J-MONTERO', 'VIRGEN-DE-FATIMA-P2'],
+};
 
 export const GEOCERCAS_POR_ZONA: Record<string, string[]> = geocercasData as Record<string, string[]>;
 
