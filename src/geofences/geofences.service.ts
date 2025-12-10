@@ -5,18 +5,20 @@ import { FindAllGeofencesDto } from './dto/find-all-geofences.dto';
 import { Geofence } from '@prisma/client';
 import { PaginationResult } from '../common/interfaces/pagination-result.interface';
 import { PrismaService } from '../prisma/prisma.service';
+import { ReportsService } from '../reports/reports.service';
 import { UpdateGeofenceDto } from './dto/update-geofence.dto';
 
 @Injectable()
 export class GeofencesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly reportsService: ReportsService
+  ) {}
 
   async create(createGeofenceDto: CreateGeofenceDto): Promise<Geofence> {
     try {
       // Verificar si ya existe un geofence con el mismo groupName
-      const existingGeofence = await this.prisma.geofence.findFirst({
-        where: { groupName: createGeofenceDto.groupName },
-      });
+      const existingGeofence = await this.prisma.geofence.findFirst({ where: { groupName: createGeofenceDto.groupName } });
 
       if (existingGeofence) {
         throw new ConflictException(`A geofence with groupName ${createGeofenceDto.groupName} already exists`);
@@ -28,6 +30,9 @@ export class GeofencesService {
           geofences: createGeofenceDto.geofences,
         },
       });
+
+      // Invalidar caché de reports cuando se crea una geocerca
+      await this.reportsService.invalidateCache();
 
       return geofence;
     } catch (error) {
@@ -98,6 +103,10 @@ export class GeofencesService {
       },
     });
 
+    // Invalidar caché de reports cuando se actualiza una geocerca
+    // Esto asegura que los reports reflejen los cambios en las geocercas
+    await this.reportsService.invalidateCache();
+
     return updatedGeofence;
   }
 
@@ -109,5 +118,8 @@ export class GeofencesService {
     }
 
     await this.prisma.geofence.delete({ where: { id } });
+
+    // Invalidar caché de reports cuando se elimina una geocerca
+    await this.reportsService.invalidateCache();
   }
 }

@@ -117,4 +117,39 @@ export class ReportsService {
 
     return result;
   }
+
+  /**
+   * Invalida todo el caché de reports
+   * Se debe llamar cuando se crea, actualiza o elimina una geocerca
+   */
+  async invalidateCache(): Promise<void> {
+    try {
+      // Para cache-manager v7+, usar clear() que elimina todas las claves
+      if (typeof this.cacheManager.clear === 'function') {
+        await this.cacheManager.clear();
+        this.logger.log('[CACHE] Caché invalidado completamente usando clear()');
+        return;
+      }
+
+      // Fallback para versiones anteriores: intentar con reset()
+      const store = (this.cacheManager as any).store;
+      if (store) {
+        if (typeof store.reset === 'function') {
+          await store.reset();
+          this.logger.log('[CACHE] Caché invalidado completamente usando store.reset()');
+          return;
+        }
+
+        if (store.store && typeof store.store.reset === 'function') {
+          await store.store.reset();
+          this.logger.log('[CACHE] Caché invalidado completamente usando store.store.reset()');
+          return;
+        }
+      }
+
+      this.logger.warn('[CACHE] No se pudo invalidar el caché - métodos clear() y reset() no disponibles');
+    } catch (error) {
+      this.logger.error(`[CACHE] Error al invalidar caché: ${error.message}`);
+    }
+  }
 }
