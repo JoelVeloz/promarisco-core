@@ -61,12 +61,6 @@ export function obtenerZonaPorGeocerca(nombreGeocerca: string): string | null {
       return zona;
     }
   }
-
-  // console.log(nombreNormalizado);
-  uniqueData.add(nombreNormalizado);
-
-  console.log(uniqueData);
-
   return 'SIN GRUPO';
 }
 
