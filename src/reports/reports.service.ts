@@ -60,7 +60,8 @@ export class ReportsService {
     let data = result.map((d: any) => ({
       unit: d.unit,
       zone: d.zone,
-      group: obtenerZonaPorGeocerca(d.zone),
+      // group: obtenerZonaPorGeocerca(d.zone),
+      group: d.group,
       entryTime: d.entryTime?.$date,
       exitTime: d.exitTime?.$date,
       distance: d.distance,
