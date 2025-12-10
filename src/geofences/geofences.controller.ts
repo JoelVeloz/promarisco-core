@@ -6,8 +6,10 @@ import { UpdateGeofenceDto } from './dto/update-geofence.dto';
 import { FindAllGeofencesDto } from './dto/find-all-geofences.dto';
 import { PaginationResult } from '../common/interfaces/pagination-result.interface';
 import { Geofence } from '@prisma/client';
+import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 
 @ApiTags('Geofences')
+@AllowAnonymous()
 @Controller('geofences')
 export class GeofencesController {
   constructor(private readonly geofencesService: GeofencesService) {}
