@@ -95,3 +95,13 @@ model WailonReport {
 
     @@map("wailon_reports")
 }
+
+model Geofence {
+    id         String   @id @default(auto()) @map("_id") @db.ObjectId
+    ngroupGame String
+    geofences  Json
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+
+    @@map("geofences")
+}
