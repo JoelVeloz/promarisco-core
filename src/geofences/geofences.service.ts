@@ -28,6 +28,8 @@ export class GeofencesService {
         data: {
           groupName: createGeofenceDto.groupName,
           geofences: createGeofenceDto.geofences,
+          minimumTravelTime: createGeofenceDto.minimumTravelTime ?? 0,
+          minimumTimeBetweenTrips: createGeofenceDto.minimumTimeBetweenTrips ?? 0,
         },
       });
 
@@ -100,6 +102,12 @@ export class GeofencesService {
       data: {
         ...(updateGeofenceDto.groupName && { groupName: updateGeofenceDto.groupName }),
         ...(updateGeofenceDto.geofences && { geofences: updateGeofenceDto.geofences }),
+        ...(updateGeofenceDto.minimumTravelTime !== undefined && {
+          minimumTravelTime: updateGeofenceDto.minimumTravelTime,
+        }),
+        ...(updateGeofenceDto.minimumTimeBetweenTrips !== undefined && {
+          minimumTimeBetweenTrips: updateGeofenceDto.minimumTimeBetweenTrips,
+        }),
       },
     });
 

@@ -17,6 +17,9 @@ export class WailonService {
   ) {}
 
   async onModuleInit() {
+    // pero debe ser el primer dia del mes
+    const fechaDesde = DateTime.now().minus({ months: 2 }).startOf('month').toISO() as string;
+    console.log(fechaDesde);
     // return;
     this.logger.log('Inicializando módulo Wailon - verificando reporte "NUEVO INFORME"...');
 
@@ -30,7 +33,8 @@ export class WailonService {
         this.logger.verbose('El reporte tiene menos de 500 registros. Cargando datos de los últimos 2 meses...');
 
         // Cargar datos de los últimos 2 meses
-        const fechaDesde = DateTime.now().minus({ months: 2 }).toISO() as string;
+        const fechaDesde = DateTime.now().minus({ months: 2 }).startOf('month').toISO() as string;
+        console.log(fechaDesde);
         const fechaHasta = DateTime.now().toISO() as string;
 
         await this.wailonReportsService.ejecutarReporteDeUnidades({ fechaDesde, fechaHasta });
@@ -55,8 +59,8 @@ export class WailonService {
     this.logger.verbose('Ejecutando reporte de Wailon (cron cada minuto)...');
 
     try {
-      // Obtener datos desde el último minuto hasta ahora
-      const fechaDesde = DateTime.now().minus({ months: 1 }).toISO() as string;
+      // la fecha inicio debe ser el pier dia de hace 2 meses
+      const fechaDesde = DateTime.now().minus({ months: 2 }).startOf('month').toISO() as string;
       const fechaHasta = DateTime.now().toISO() as string;
 
       await this.wailonReportsService.ejecutarReporteDeUnidades({ fechaDesde, fechaHasta });

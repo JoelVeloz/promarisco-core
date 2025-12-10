@@ -97,11 +97,13 @@ model WailonReport {
 }
 
 model Geofence {
-    id        String   @id @default(auto()) @map("_id") @db.ObjectId
-    groupName String
-    geofences Json
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    id                      String   @id @default(auto()) @map("_id") @db.ObjectId
+    groupName               String
+    geofences               Json
+    minimumTravelTime       Int      @default(0)
+    minimumTimeBetweenTrips Int      @default(0)
+    createdAt               DateTime @default(now())
+    updatedAt               DateTime @updatedAt
 
     @@map("geofences")
 }
