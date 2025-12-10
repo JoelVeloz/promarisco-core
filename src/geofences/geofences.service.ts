@@ -13,18 +13,18 @@ export class GeofencesService {
 
   async create(createGeofenceDto: CreateGeofenceDto): Promise<Geofence> {
     try {
-      // Verificar si ya existe un geofence con el mismo ngroupGame
+      // Verificar si ya existe un geofence con el mismo groupName
       const existingGeofence = await this.prisma.geofence.findFirst({
-        where: { ngroupGame: createGeofenceDto.ngroupGame },
+        where: { groupName: createGeofenceDto.groupName },
       });
 
       if (existingGeofence) {
-        throw new ConflictException(`A geofence with ngroupGame ${createGeofenceDto.ngroupGame} already exists`);
+        throw new ConflictException(`A geofence with groupName ${createGeofenceDto.groupName} already exists`);
       }
 
       const geofence = await this.prisma.geofence.create({
         data: {
-          ngroupGame: createGeofenceDto.ngroupGame,
+          groupName: createGeofenceDto.groupName,
           geofences: createGeofenceDto.geofences,
         },
       });
@@ -78,14 +78,14 @@ export class GeofencesService {
       throw new NotFoundException(`Geofence with ID ${id} not found`);
     }
 
-    // Si se está actualizando el ngroupGame, verificar que no esté en uso
-    if (updateGeofenceDto.ngroupGame && updateGeofenceDto.ngroupGame !== existingGeofence.ngroupGame) {
-      const ngroupGameInUse = await this.prisma.geofence.findFirst({
-        where: { ngroupGame: updateGeofenceDto.ngroupGame },
+    // Si se está actualizando el groupName, verificar que no esté en uso
+    if (updateGeofenceDto.groupName && updateGeofenceDto.groupName !== existingGeofence.groupName) {
+      const groupNameInUse = await this.prisma.geofence.findFirst({
+        where: { groupName: updateGeofenceDto.groupName },
       });
 
-      if (ngroupGameInUse) {
-        throw new ConflictException(`A geofence with ngroupGame ${updateGeofenceDto.ngroupGame} already exists`);
+      if (groupNameInUse) {
+        throw new ConflictException(`A geofence with groupName ${updateGeofenceDto.groupName} already exists`);
       }
     }
 
@@ -93,7 +93,7 @@ export class GeofencesService {
     const updatedGeofence = await this.prisma.geofence.update({
       where: { id },
       data: {
-        ...(updateGeofenceDto.ngroupGame && { ngroupGame: updateGeofenceDto.ngroupGame }),
+        ...(updateGeofenceDto.groupName && { groupName: updateGeofenceDto.groupName }),
         ...(updateGeofenceDto.geofences && { geofences: updateGeofenceDto.geofences }),
       },
     });
