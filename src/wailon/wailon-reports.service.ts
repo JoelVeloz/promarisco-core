@@ -92,7 +92,8 @@ export class WailonReportsService {
    */
   private generarTransformedFromRow(row: WialonReportRow): Prisma.InputJsonValue {
     return {
-      group: obtenerZonaPorGeocerca(row.c[1] as string),
+      group: '',
+      // group: obtenerZonaPorGeocerca(row.c[1] as string),
       unit: row.c[0],
       zone: row.c[1],
       entryTime: (row.c[2] as any)?.v ? (DateTime.fromSeconds((row.c[2] as any).v).toISO() as string) : null,
