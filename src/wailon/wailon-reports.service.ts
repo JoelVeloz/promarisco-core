@@ -102,110 +102,43 @@ export class WailonReportsService {
   }
 
   /**
-   * Genera el key único para un elemento r
-   * El key se genera como: uid_unit_entryTimestamp
-   * Puede usarse tanto para datos de la base de datos (desde data) como para datos del reporte (objeto r)
-   * @param rData Objeto WialonReportRow o data guardado en base de datos
-   * @returns El key generado o null si faltan datos requeridos
-   */
-  private generarKeyDesdeData(rData: WialonReportRow | any): string | null {
-    const unit = rData?.c?.[0];
-    const entryTimestamp = (rData?.c?.[2] as any)?.v;
-    const geocerca = rData?.c?.[0];
-
-    if (!unit || !entryTimestamp || !geocerca) {
-      return null;
-    }
-
-    return `${unit}_${entryTimestamp}_${geocerca}`;
-  }
-
-  /**
-   * Guarda o actualiza reportes en la base de datos
-   * Itera sobre cada elemento r dentro de cada reporte
-   * Usa como clave única: c[0] (PM001) y c[2].v (timestamp)
-   * Guarda cada elemento r completo en el campo data
+   * Guarda reportes en la base de datos
+   * Elimina todos los reportes existentes y crea nuevos desde cero
    */
   async guardarReportesEnBaseDeDatos(reportData: WialonReportData): Promise<void> {
     try {
       this.logger.log(`Procesando ${reportData.length} reportes para guardar en base de datos`);
 
-      // Obtener todos los reportes existentes una sola vez para optimizar las búsquedas
-      const allReports = await this.prisma.wailonReport.findMany({ where: { name: 'NUEVO INFORME' } });
+      // Eliminar todos los reportes existentes
+      await this.prisma.wailonReport.deleteMany({ where: { name: 'NUEVO INFORME' } });
+      this.logger.verbose('Reportes existentes eliminados');
 
-      // Crear un Map con key como clave para búsquedas rápidas
-      // El key se genera como: uid_unit_entryTime
-      // Se obtiene desde data (objeto r), no desde transformed
-      const reportsMap = new Map<string, { id: string; existingData: any }>();
-
-      allReports.forEach(report => {
-        // Leer desde data (objeto r completo), no desde transformed
-        const rData = report.data as any;
-        const key = this.generarKeyDesdeData(rData);
-        if (key) {
-          reportsMap.set(key, {
-            id: report.id,
-            existingData: report.data || null,
-          });
-        }
-      });
-
-      // Separar en creates y updates, luego ejecutar en batch
+      // Preparar todos los reportes para crear
       const toCreate: any[] = [];
-      const toUpdate: Array<{ id: string; data: any; transformed: Prisma.InputJsonValue }> = [];
 
       // Iterar sobre cada reporte y cada elemento r dentro de cada reporte
       reportData.forEach(report => {
         if (!report.r || report.r.length === 0) return;
 
         report.r.forEach((r: WialonReportRow) => {
-          // Generar key usando la función reutilizable
-          const key = this.generarKeyDesdeData(r);
-          if (!key) {
-            this.logger.warn(`Saltando elemento r sin uid, unit o timestamp: ${JSON.stringify(r)}`);
-            return;
-          }
-
           // Generar transformed
           const transformed = this.generarTransformedFromRow(r);
 
-          // Verificar si existe en el Map
-          const existingReport = reportsMap.get(key);
-
           // El dato completo del elemento r se guarda en el campo data
-          const payload = {
+          toCreate.push({
+            name: 'NUEVO INFORME',
             data: r, // Guardar todo el elemento r como data
             transformed,
-          };
-
-          if (existingReport) {
-            // Actualizar registro existente
-            toUpdate.push({
-              id: existingReport.id,
-              ...payload,
-            });
-          } else {
-            // Crear nuevo registro
-            toCreate.push({
-              name: 'NUEVO INFORME',
-              ...payload,
-            });
-          }
+          });
         });
       });
 
-      // Ejecutar creates y updates en paralelo
-      await Promise.all([
-        ...(toCreate.length > 0 ? [this.prisma.wailonReport.createMany({ data: toCreate })] : []),
-        ...toUpdate.map(u =>
-          this.prisma.wailonReport.update({
-            where: { id: u.id },
-            data: { data: u.data, transformed: u.transformed },
-          })
-        ),
-      ]);
+      // Crear todos los reportes
+      if (toCreate.length > 0) {
+        await this.prisma.wailonReport.createMany({ data: toCreate });
+        this.logger.verbose(`Creados ${toCreate.length} reportes`);
+      }
 
-      this.logger.verbose(`Guardados: ${toCreate.length}, Actualizados: ${toUpdate.length}`);
       this.logger.log(`✓ Proceso de guardado en base de datos completado: ${reportData.length} reportes procesados`);
     } catch (error) {
       this.logger.error(`Error al guardar reportes en base de datos: ${error.message}`, error.stack);
@@ -214,9 +147,8 @@ export class WailonReportsService {
   }
 
   /**
-   * Guarda o actualiza reportes desde un archivo JSON en la base de datos
-   * Usa como clave única: c[0] (PM001) y c[2].v (timestamp)
-   * Guarda el array r en el campo data
+   * Guarda reportes desde un archivo JSON en la base de datos
+   * Elimina todos los reportes existentes y crea nuevos desde cero
    */
   async guardarReportesDesdeArchivo(filePath: string): Promise<void> {
     try {

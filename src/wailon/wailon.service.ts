@@ -50,20 +50,20 @@ export class WailonService {
     }
   }
 
-  // @Cron(CronExpression.EVERY_10_MINUTES)
-  // async procesarReporteCadaMinuto() {
-  //   this.logger.verbose('Ejecutando reporte de Wailon (cron cada minuto)...');
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async procesarReporteCadaMinuto() {
+    this.logger.verbose('Ejecutando reporte de Wailon (cron cada minuto)...');
 
-  //   try {
-  //     // Obtener datos desde el último minuto hasta ahora
-  //     const fechaDesde = DateTime.now().minus({ months: 1 }).toISO() as string;
-  //     const fechaHasta = DateTime.now().toISO() as string;
+    try {
+      // Obtener datos desde el último minuto hasta ahora
+      const fechaDesde = DateTime.now().minus({ months: 1 }).toISO() as string;
+      const fechaHasta = DateTime.now().toISO() as string;
 
-  //     await this.wailonReportsService.ejecutarReporteDeUnidades({ fechaDesde, fechaHasta });
+      await this.wailonReportsService.ejecutarReporteDeUnidades({ fechaDesde, fechaHasta });
 
-  //     this.logger.verbose('✓ Reporte cada minuto completado exitosamente');
-  //   } catch (error) {
-  //     this.logger.error('Error al ejecutar reporte cada minuto:', error);
-  //   }
-  // }
+      this.logger.verbose('✓ Reporte cada minuto completado exitosamente');
+    } catch (error) {
+      this.logger.error('Error al ejecutar reporte cada minuto:', error);
+    }
+  }
 }

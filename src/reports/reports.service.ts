@@ -1,4 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { obtenerZonaPorGeocerca } from 'src/wailon/utils/geocercas';
@@ -27,10 +29,29 @@ function formatDate(date: Date) {
 @Injectable()
 export class ReportsService {
   private readonly logger = new Logger(ReportsService.name);
+  private readonly CACHE_TTL = 300000; // 5 minutos en milisegundos
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
+  ) {}
 
   async getAll(filters?: GetAllFilters): Promise<any[]> {
+    const startTime = Date.now();
+
+    // Generar clave única basada en los filtros
+    const cacheKey = `reports:getAll:${JSON.stringify(filters || {})}`;
+
+    // Intentar obtener del caché
+    const cachedData = await this.cacheManager.get<any[]>(cacheKey);
+    if (cachedData) {
+      const duration = Date.now() - startTime;
+      this.logger.log(`[CACHE HIT] Datos obtenidos del caché en ${duration}ms - ${cachedData.length} resultados`);
+      return cachedData;
+    }
+
+    this.logger.log(`[CACHE MISS] Iniciando getAll con filtros: ${JSON.stringify(filters)}`);
+
     const matchConditions: any = {
       ...(filters?.unit && { unit: filters.unit }),
       ...(filters?.zone && { zone: filters.zone }),
@@ -50,8 +71,13 @@ export class ReportsService {
       cursor: { batchSize: 20000 },
     })) as any;
 
-    const result = docs.cursor?.firstBatch || [];
-    console.log(result);
+    let result = docs.cursor?.firstBatch || [];
+
+    // Guardar en caché
+    await this.cacheManager.set(cacheKey, result, this.CACHE_TTL);
+
+    const duration = Date.now() - startTime;
+    this.logger.log(`[CACHE SET] getAll completado en ${duration}ms - ${result.length} resultados - Guardado en caché`);
 
     // // ---------------------------------------------------------
     // // 1) Eliminar duplicados SOLO en completados (exitTime)
