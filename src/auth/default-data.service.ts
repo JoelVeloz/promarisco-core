@@ -11,6 +11,7 @@ export class DefaultDataService implements OnModuleInit {
 
   async onModuleInit() {
     await this.createDefaultUser('proyectos@grupoalconsa.com', 'Pro2025@!', 'Usuario Proyectos');
+    await this.createDefaultUser('syscloud.saas@gmail.com', 'Pro2025@!', 'SysCloud Team');
   }
 
   async createDefaultUser(defaultEmail: string, defaultPassword: string, defaultName: string) {
