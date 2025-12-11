@@ -17,14 +17,7 @@ export const auth = betterAuth({
   trustedOrigins: [config.FRONTEND_CLIENT_URL, 'http://localhost:3000'],
   basePath: '/auth',
   database: prismaAdapter(prismaService, { provider: 'postgresql' }),
-  emailAndPassword: {
-    enabled: true,
-    // requireEmailVerification: false,
-    // sendResetPassword: async ({ user, url }) => {
-    //   await emailService.sendResetToken(user.name, user.email, url);
-    // },
-  },
-
+  emailAndPassword: { enabled: true, disableSignUp: true },
   secret: config.AUTH_SECRET,
   plugins: [
     admin(),
