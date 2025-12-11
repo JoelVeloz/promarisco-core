@@ -18,3 +18,4 @@ export class FindAllGeofencesDto {
   @Min(1)
   limit?: number = 10;
 }
+

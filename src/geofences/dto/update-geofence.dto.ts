@@ -36,3 +36,4 @@ export class UpdateGeofenceDto {
   @Min(0, { message: 'minimumTimeBetweenTrips must be greater than or equal to 0' })
   minimumTimeBetweenTrips?: number;
 }
+

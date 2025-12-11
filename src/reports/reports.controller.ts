@@ -4,7 +4,9 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FindAllReportsDto } from './dto/find-all-reports.dto';
 import { ReportsService } from './reports.service';
 import { geofenceEventResponseSchema } from './schemas/geofence-event.schema';
+import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 
+@AllowAnonymous()
 @ApiTags('Reports')
 @Controller('reports')
 @UseInterceptors(CacheInterceptor)

@@ -11,3 +11,4 @@ import { ReportsModule } from '../reports/reports.module';
   exports: [GeofencesService],
 })
 export class GeofencesModule {}
+

@@ -19,3 +19,4 @@ export function convertToUTC(dateString: string): Date | undefined {
     return undefined;
   }
 }
+

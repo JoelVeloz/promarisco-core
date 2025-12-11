@@ -13,3 +13,4 @@ export class UpdateUserDto {
   @IsEmail({}, { message: 'El correo electrónico debe ser válido' })
   email?: string;
 }
+

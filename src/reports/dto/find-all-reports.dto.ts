@@ -82,3 +82,4 @@ export class FindAllReportsDto {
   @Min(1)
   limit?: number;
 }
+
