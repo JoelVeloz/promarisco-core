@@ -37,3 +37,4 @@ export class UpdateGeofenceDto {
   minimumTimeBetweenTrips?: number;
 }
 
+

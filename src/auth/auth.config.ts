@@ -18,7 +18,7 @@ export const auth = betterAuth({
   database: prismaAdapter(prismaService, { provider: 'postgresql' }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false,
+    // requireEmailVerification: false,
     // sendResetPassword: async ({ user, url }) => {
     //   await emailService.sendResetToken(user.name, user.email, url);
     // },
@@ -28,13 +28,13 @@ export const auth = betterAuth({
   plugins: [
     admin(),
     jwt(),
-    // emailOTP({
-    //   otpLength: 8,
-    //   expiresIn: 600,
-    //   sendVerificationOTP: async ({ email, otp, type }) => {
-    //     await emailService.sendOTP(email, otp, type);
-    //   },
-    // }),
+    emailOTP({
+      otpLength: 8,
+      expiresIn: 600,
+      sendVerificationOTP: async ({ email, otp, type }) => {
+        await emailService.sendOTP(email, otp, type);
+      },
+    }),
   ],
   hooks: {},
   advanced: {

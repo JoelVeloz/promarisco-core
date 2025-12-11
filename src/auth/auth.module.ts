@@ -9,7 +9,7 @@ import { auth } from './auth.config';
 
 @Module({
   imports: [BetterAuthModule.forRoot({ auth }), PrismaModule],
-  // providers: [{ provide: APP_GUARD, useClass: AuthGuard }, AfterSignUpHook, DefaultDataService],
-  providers: [AfterSignUpHook, DefaultDataService],
+  providers: [{ provide: APP_GUARD, useClass: AuthGuard }, AfterSignUpHook, DefaultDataService],
+  // providers: [AfterSignUpHook, DefaultDataService],
 })
 export class AuthModule {}
