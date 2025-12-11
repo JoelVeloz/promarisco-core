@@ -15,12 +15,17 @@ const envSchema = z.object({
   // Wailon
   WAILON_TOKEN: z.string(),
   // SMTP
-  SMTP_HOST: z.string(),
-  SMTP_PORT: z.coerce.number().int().positive(),
-  SMTP_SECURE: z.coerce.boolean().default(false),
-  SMTP_USER: z.string(),
-  SMTP_PASSWORD: z.string(),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().optional(),
+  SMTP_SECURE: z.coerce.boolean().default(false).optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
   SMTP_FROM: z.string().optional(),
+  // Resend
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().optional(),
+  // Email Provider Selection
+  USE_RESEND: z.coerce.boolean().default(true),
 });
 
 export const config = (() => {

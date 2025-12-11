@@ -1,20 +1,14 @@
-import * as nodemailer from 'nodemailer';
-
+import { Resend } from 'resend';
 import { config } from '../config';
 
-export class EmailService {
-  private transporter: nodemailer.Transporter;
+export class ResendEmailService {
+  private resend: Resend;
 
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: config.SMTP_HOST,
-      port: config.SMTP_PORT,
-      secure: config.SMTP_SECURE, // true para 465, false para otros puertos
-      auth: {
-        user: config.SMTP_USER,
-        pass: config.SMTP_PASSWORD,
-      },
-    });
+    if (!config.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY es requerida');
+    }
+    this.resend = new Resend(config.RESEND_API_KEY);
   }
 
   async sendOTP(email: string, otp: string, type: string) {
@@ -31,23 +25,12 @@ export class EmailService {
       </div>
     `;
 
-    try {
-      await this.transporter.sendMail({
-        from: config.SMTP_FROM || config.SMTP_USER,
-        to: email,
-        subject,
-        html,
-      });
-      console.log(`Correo enviado exitosamente a ${email}`);
-    } catch (error) {
-      console.error(`Error al enviar correo a ${email}:`, error);
-      throw error;
-    }
+    const fromEmail = config.RESEND_FROM_EMAIL || 'noreply@example.com';
+    await this.resend.emails.send({ from: fromEmail, to: email, subject, html });
   }
 
-  async sendResetToken(username, email, url: string) {
+  async sendResetToken(username: string, email: string, url: string) {
     const subject = 'Código de recuperación de contraseña';
-
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>${subject}</h2>
@@ -57,16 +40,8 @@ export class EmailService {
         </div>
       </div>
     `;
-    try {
-      await this.transporter.sendMail({
-        from: config.SMTP_FROM || config.SMTP_USER,
-        to: email,
-        subject,
-        html,
-      });
-    } catch (error) {
-      console.error(`Error al enviar correo a ${email}:`, error);
-      throw error;
-    }
+
+    const fromEmail = config.RESEND_FROM_EMAIL || 'noreply@example.com';
+    await this.resend.emails.send({ from: fromEmail, to: email, subject, html });
   }
 }

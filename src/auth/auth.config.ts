@@ -1,5 +1,6 @@
-import { EmailService } from './email.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { ResendEmailService } from './resend-email.service';
+import { SMTPEmailService } from './smtp-email.service';
 import { admin } from 'better-auth/plugins/admin';
 import { betterAuth } from 'better-auth';
 import { config } from '../config';
@@ -9,7 +10,7 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { randomUUID } from 'crypto';
 
 const prismaService = new PrismaService();
-const emailService = new EmailService();
+const emailService = config.USE_RESEND ? new ResendEmailService() : new SMTPEmailService();
 
 export const auth = betterAuth({
   // baseURL: config.FRONTEND_CLIENT_URL,
