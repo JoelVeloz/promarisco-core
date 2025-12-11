@@ -1,15 +1,12 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { GeofencesService } from './geofences.service';
-import { CreateGeofenceDto } from './dto/create-geofence.dto';
-import { UpdateGeofenceDto } from './dto/update-geofence.dto';
-import { FindAllGeofencesDto } from './dto/find-all-geofences.dto';
-import { PaginationResult } from '../common/interfaces/pagination-result.interface';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query } from '@nestjs/common';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Geofence } from '@prisma/client';
-import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
+import { PaginationResult } from '../common/interfaces/pagination-result.interface';
+import { CreateGeofenceDto } from './dto/create-geofence.dto';
+import { FindAllGeofencesDto } from './dto/find-all-geofences.dto';
+import { UpdateGeofenceDto } from './dto/update-geofence.dto';
+import { GeofencesService } from './geofences.service';
 
-@ApiTags('Geofences')
-@AllowAnonymous()
 @Controller('geofences')
 export class GeofencesController {
   constructor(private readonly geofencesService: GeofencesService) {}
